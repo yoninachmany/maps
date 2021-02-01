@@ -1,2 +1,2 @@
 # maps
-maps
+- **Classroom**: to evoke a map of the world in a classroom, I styled the [Mapbox Countries v1 tileset](https://docs.mapbox.com/vector-tiles/reference/mapbox-countries-v1/) with the [Data Visualization component](https://docs.mapbox.com/help/tutorials/create-a-map-with-data-visualization-component/) (filtering non-US worldviews & using `color_group` numbers) and added the ability to draw lines and polygons on the map with [Mapbox GL Draw](https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md).

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Draw on the Classroom Map!</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.css" rel="stylesheet" />
+<style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.js"></script>
+<link
+    rel="stylesheet"
+    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.css"
+    type="text/css"
+/>
+<div id="map"></div>
+
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55bWFwYm94IiwiYSI6ImNrMTg3dXo4dDAwbHkzYnBob3dtajM4a2kifQ.SNPc6w7pfD_HalkSzRkFKw';
+    var map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/yoninachmanymapbox/ckklsulq943g517lnpjhnta4o',
+        center: [-2, 2],
+        zoom: 2,
+        hash: true
+    });
+
+    // https://docs.mapbox.com/mapbox-gl-js/example/mapbox-gl-draw/
+    var draw = new MapboxDraw({
+        displayControlsDefault: false,
+        controls: {
+            line_string: true,
+            polygon: true,
+            trash: true
+        },
+        // https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/EXAMPLES.md#lines-and-polygons
+        styles: [
+            // ACTIVE (being drawn)
+            // line stroke
+            {
+                "id": "gl-draw-line",
+                "type": "line",
+                "filter": ["all", ["==", "$type", "LineString"], ["!=", "mode", "simple_select"]],
+                "layout": {
+                    "line-cap": "round",
+                    "line-join": "round"
+                },
+                "paint": {
+                    "line-color": "#D20C0C",
+                    "line-dasharray": [0.2, 2],
+                    "line-width": 2
+                }
+            },
+            // polygon fill
+            {
+                "id": "gl-draw-polygon-fill",
+                "type": "fill",
+                "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "simple_select"]],
+                "paint": {
+                    "fill-color": "#D20C0C",
+                    "fill-outline-color": "#D20C0C",
+                    "fill-opacity": 0.1
+                }
+            },
+            // polygon outline stroke
+            // This doesn't style the first edge of the polygon, which uses the line stroke styling instead
+            {
+                "id": "gl-draw-polygon-stroke-active",
+                "type": "line",
+                "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "simple_select"]],
+                "layout": {
+                    "line-cap": "round",
+                    "line-join": "round"
+                },
+                "paint": {
+                    "line-color": "#D20C0C",
+                    "line-dasharray": [0.2, 2],
+                    "line-width": 2
+                }
+            },
+            // vertex point halos
+            {
+                "id": "gl-draw-polygon-and-line-vertex-halo-active",
+                "type": "circle",
+                "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "simple_select"]],
+                "paint": {
+                    "circle-radius": 5,
+                    "circle-color": "#FFF"
+                }
+            },
+            // vertex points
+            {
+                "id": "gl-draw-polygon-and-line-vertex-active",
+                "type": "circle",
+                "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "simple_select"]],
+                "paint": {
+                    "circle-radius": 3,
+                    "circle-color": "#D20C0C",
+                }
+            },
+
+            // INACTIVE (static, already drawn)
+            // line stroke
+            {
+                "id": "gl-draw-line-static",
+                "type": "line",
+                "filter": ["all", ["==", "$type", "LineString"], ["==", "mode", "simple_select"]],
+                "layout": {
+                    "line-cap": "round",
+                    "line-join": "round"
+                },
+                "paint": {
+                    "line-color": "#000",
+                    "line-width": 3
+                }
+            },
+            // polygon fill
+            {
+                "id": "gl-draw-polygon-fill-static",
+                "type": "fill",
+                "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "simple_select"]],
+                "paint": {
+                    "fill-color": "#000",
+                    "fill-outline-color": "#000",
+                    "fill-opacity": 0.1
+                }
+            },
+            // polygon outline
+            {
+                "id": "gl-draw-polygon-stroke-static",
+                "type": "line",
+                "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "simple_select"]],
+                "layout": {
+                    "line-cap": "round",
+                    "line-join": "round"
+                },
+                "paint": {
+                    "line-color": "#000",
+                    "line-width": 3
+                }
+            }
+        ]
+    });
+    map.addControl(draw);
+</script>
+
+</body>
+</html>
