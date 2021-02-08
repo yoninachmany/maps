@@ -1,5 +1,6 @@
 const IMAGES = {
     'Statue of Liberty': 'https://miro.medium.com/max/2000/0*uFDrXUtm3MGuPld5.png',
+    "Lady Liberty's Torch": 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Seurat-La_Parade_detail.jpg/280px-Seurat-La_Parade_detail.jpg',
     'Ellis Island': './images/openpointclouddata.jpg',
     'Red Hook': 'https://www1.nyc.gov/assets/doitt/images/content/pages/gis-lidar-and-derived-products.jpg',
     "Governor's Island": 'https://maps.nyc.gov/lidar/2017/img/topo.png',
