@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Maxar / NYS GIS</title>
+<title>NYC Spring 2020 NYS GIS/Maxar</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"></script>
@@ -45,15 +45,6 @@ body { margin: 0; padding: 0; }
     ];
     mapboxgl.accessToken = 'pk.eyJ1IjoiZGdpbnRlcmFjdGl2ZSIsImEiOiJKSGczdWhnIn0.UyoVWvXEQ6KO_xx1Ry2lQA';
     var beforeMap = new mapboxgl.Map({
-        container: 'before',
-        style: 'mapbox://styles/dginteractive/ck8ungqiz1adq1iqir5ii75t8',
-        center: [-73.97435, 40.77121],
-        maxBounds: bounds,
-        zoom: 13.3,
-        minzoom: 11.5
-    });
-
-    var afterMap = new mapboxgl.Map({
         container: 'after',
         style: 'mapbox://styles/mapbox/satellite-v9',
         center: [-73.97435, 40.77121],
@@ -62,8 +53,8 @@ body { margin: 0; padding: 0; }
         minzoom: 11.5
     });
 
-    afterMap.on('load', function () {
-        afterMap.addSource('nyc-spring-2020', {
+    beforeMap.on('load', function () {
+        beforeMap.addSource('nyc-spring-2020', {
             'type': 'raster',
             // use the tiles option to specify a WMS tile source URL
             // https://docs.mapbox.com/mapbox-gl-js/style-spec/sources/
@@ -73,7 +64,7 @@ body { margin: 0; padding: 0; }
             'attribution': '<a href="https://orthos.its.ny.gov/arcgis/rest/services/wms/2020/MapServer">NYS ITS GIS Program Office</a>',
             'tileSize': 256
         });
-        afterMap.addLayer(
+        beforeMap.addLayer(
             {
                 'id': 'nyc-spring-2020',
                 'type': 'raster',
@@ -81,6 +72,16 @@ body { margin: 0; padding: 0; }
             }
         );
     });
+
+    var afterMap = new mapboxgl.Map({
+        container: 'before',
+        style: 'mapbox://styles/dginteractive/ck8ungqiz1adq1iqir5ii75t8',
+        center: [-73.97435, 40.77121],
+        maxBounds: bounds,
+        zoom: 13.3,
+        minzoom: 11.5
+    });
+
 
     // A selector or reference to HTML element
     var container = '#comparison-container';
