@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Earthrise</title>
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.js"></script>
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://unpkg.com/three@0.126.1/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.126.1/examples/js/loaders/GLTFLoader.js"></script>
+
+    <div id="map"></div>
+
+    <script>
+      const tilesetID = "yoninachmanymapbox.moon-terrain-rgb"
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoieW9uaW5hY2htYW55bWFwYm94IiwiYSI6ImNrMTg3dXo4dDAwbHkzYnBob3dtajM4a2kifQ.SNPc6w7pfD_HalkSzRkFKw";
+      const query = new URLSearchParams(window.location.search);
+      mapboxgl.accessToken = query.get("access_token") || "pk.eyJ1IjoieW9uaW5hY2htYW55bWFwYm94IiwiYSI6ImNrMTg3dXo4dDAwbHkzYnBob3dtajM4a2kifQ.SNPc6w7pfD_HalkSzRkFKw";
+      const exaggeration = query.get("exaggeration") || "50";
+      const tilesetRegex = new RegExp(`${tilesetID}/[0-9]+\/[0-9]+\/[0-9]+`);
+      const map = (window.map = new mapboxgl.Map({
+        container: "map",
+        zoom: 2.7,
+        center: [-4.72, 44.6],
+        pitch: 85,
+        bearing: 4,
+        hash: true,
+        antialias: true, // create the gl context with MSAA antialiasing, so custom layers are antialiased
+        style: "mapbox://styles/yoninachmanymapbox/cklzkai5n6sqo17qfvrmupn07",
+        customAttribution: "<a href='https://svs.gsfc.nasa.gov/4720' target='_blank'>NASA's Scientific Visualization Studio</a>",
+        transformRequest: (url, type) => {
+          if (type === "Tile" && tilesetRegex.test(url) && !tilesetID.startsWith("mapbox")) {
+            return { url: url.replace("webp", "pngraw") };
+          }
+        }
+      }));
+
+    // parameters to ensure the model is georeferenced correctly on the map
+    var modelOrigin = [0, 85];
+    var modelAltitude = 400000;
+    var modelRotate = [Math.PI / 2, Math.PI / 2, 0];
+
+    var modelAsMercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(
+        modelOrigin,
+        modelAltitude
+    );
+
+    // transformation parameters to position, rotate and scale the 3D model onto the map
+    var modelTransform = {
+        translateX: modelAsMercatorCoordinate.x,
+        translateY: modelAsMercatorCoordinate.y,
+        translateZ: modelAsMercatorCoordinate.z,
+        rotateX: modelRotate[0],
+        rotateY: modelRotate[1],
+        rotateZ: modelRotate[2],
+        /* Since our 3D model is in real world meters, a scale transform needs to be
+         * applied since the CustomLayerInterface expects units in MercatorCoordinates.
+         */
+        scale: modelAsMercatorCoordinate.meterInMercatorCoordinateUnits()
+    };
+
+    var THREE = window.THREE;
+
+    // configuration of the custom layer for a 3D model per the CustomLayerInterface
+    var customLayer = {
+        id: '3d-model',
+        type: 'custom',
+        renderingMode: '3d',
+        onAdd: function (map, gl) {
+            this.camera = new THREE.Camera();
+            this.scene = new THREE.Scene();
+
+            // create two three.js lights to illuminate the model
+            var directionalLight = new THREE.DirectionalLight(0xffffff);
+            directionalLight.position.set(0, -70, 100).normalize();
+            this.scene.add(directionalLight);
+
+            var directionalLight2 = new THREE.DirectionalLight(0xffffff);
+            directionalLight2.position.set(0, 70, 100).normalize();
+            this.scene.add(directionalLight2);
+
+            const WIDTH = window.innerWidth;
+            const HEIGHT = window.innerHeight;
+
+            const RADIUS = 200000;
+            const SEGMENTS = 50;
+            const RINGS = 50;
+
+            const globe = new THREE.Group();
+            this.scene.add(globe);
+
+            // use the three.js GLTF loader to add the 3D model to the three.js scene
+            var loader = new THREE.TextureLoader();
+            loader.load(
+                'land_ocean_ice_cloud_2048.jpeg',
+                function (texture) {
+                    var sphere = new THREE.SphereGeometry(RADIUS, SEGMENTS, RINGS);
+                    var material = new THREE.MeshBasicMaterial( { map: texture  } );
+                    var mesh = new THREE.Mesh(sphere, material);
+
+                    globe.add(mesh);
+
+                }.bind(this)
+            );
+            this.map = map;
+
+            // use the Mapbox GL JS map canvas for three.js
+            this.renderer = new THREE.WebGLRenderer({
+                canvas: map.getCanvas(),
+                context: gl,
+                antialias: true
+            });
+
+            this.renderer.autoClear = false;
+        },
+        render: function (gl, matrix) {
+            var rotationX = new THREE.Matrix4().makeRotationAxis(
+                new THREE.Vector3(1, 0, 0),
+                modelTransform.rotateX
+            );
+            var rotationY = new THREE.Matrix4().makeRotationAxis(
+                new THREE.Vector3(0, 1, 0),
+                modelTransform.rotateY
+            );
+            var rotationZ = new THREE.Matrix4().makeRotationAxis(
+                new THREE.Vector3(0, 0, 1),
+                modelTransform.rotateZ
+            );
+
+            var m = new THREE.Matrix4().fromArray(matrix);
+            var l = new THREE.Matrix4()
+                .makeTranslation(
+                    modelTransform.translateX,
+                    modelTransform.translateY,
+                    modelTransform.translateZ
+                )
+                .scale(
+                    new THREE.Vector3(
+                        modelTransform.scale,
+                        -modelTransform.scale,
+                        modelTransform.scale
+                    )
+                )
+                .multiply(rotationX)
+                .multiply(rotationY)
+                .multiply(rotationZ);
+
+            this.camera.projectionMatrix = m.multiply(l);
+            this.renderer.resetState();
+            this.scene.rotation.y -= 0.01;
+            this.renderer.render(this.scene, this.camera);
+            this.map.triggerRepaint();
+        }
+      };
+
+      map.on("load", function() {
+        map.addSource("mapbox-dem", {
+          type: "raster-dem",
+          url: `mapbox://${tilesetID}`,
+          tileSize: 512
+        });
+        // add the DEM source as a terrain layer with exaggerated height
+        map.setTerrain({ source: "mapbox-dem", exaggeration: parseInt(exaggeration) });
+
+        map.addLayer(
+          {
+            'id': 'hillshading',
+            'source': 'mapbox-dem',
+            'type': 'hillshade'
+          }
+        );
+
+        map.addLayer(customLayer);
+      });
+    </script>
+  </body>
+</html>
