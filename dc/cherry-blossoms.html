@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>DC Cherry Blossom Map</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+
+<style>
+    #menu {
+        position: absolute;
+        background: #efefef;
+        padding: 10px;
+        font-family: 'Open Sans', sans-serif;
+    }
+    .map-overlay {
+        position: absolute;
+        background: #efefef;
+        bottom: 0;
+        right: 0;
+        margin-right: 20px;
+        font-family: 'Open Sans', sans-serif;
+        font-size: small;
+        overflow: auto;
+        border-radius: 3px;
+    }
+    #legend {
+        padding: 10px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        line-height: 18px;
+        height: 220px;
+        margin-bottom: 40px;
+        width: 100;
+    }
+    .legend-key {
+        display: inline-block;
+        border-radius: 50%;
+        width: 10px;
+        height: 10px;
+        margin-right: 5px;
+    }
+</style>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css" type="text/css">
+<!-- Promise polyfill script required to use Mapbox GL Geocoder in IE 11 -->
+<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
+<div id="map"></div>
+
+<div id="menu">
+    <input id="mapbox" type="radio" name="rtoggle" value="mapbox" checked="checked">
+    <label for="mapbox">Sharper imagery</label>
+    <input id="dcgis" type="radio" name="rtoggle" value="dcgis">
+    <label for="dcgis">Newer imagery</label>
+</div>
+
+<div class="map-overlay" id="legend"></div>
+
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55bWFwYm94IiwiYSI6ImNrMTg3dXo4dDAwbHkzYnBob3dtajM4a2kifQ.SNPc6w7pfD_HalkSzRkFKw';
+    var map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/satellite-streets-v11',
+        center: [-77.0146, 38.908],
+        zoom: 11.16,
+        hash: true
+    });
+
+    var values = [
+        'Cherry spp.',
+        ['Yoshino Cherry', 'Cherry, Japanese Flowering Yoshino', 'Cherry, Japanese Flowering Yoshino Akebono'],
+        ['Cherry, Flowering Okame', 'Okame Cherry'],
+        ['Cherry, Higan Autumnalis', 'Cherry, Higan'],
+        ['Kwanzan Cherry', 'Cherry, Japanese Flowering Kwanzan'],
+        'Oshima Cherry',
+        'Cherry, Sour',
+        'Cherry, Black',
+        'Cherry, Sweet',
+        'Cherry, Sargent',
+        'Chokecherry',
+        'Cherry (Snowgoose)'
+    ];
+    var labels = [
+        'Cherry spp.',
+        'Yoshino Cherry',
+        'Okame Cherry',
+        'Cherry, Higan',
+        'Kwanzan Cherry',
+        'Oshima Cherry',
+        'Cherry, Sour',
+        'Cherry, Black',
+        'Cherry, Sweet',
+        'Cherry, Sargent',
+        'Chokecherry',
+        'Cherry (Snowgoose)'
+    ]
+    var colors = [
+        'rgba(255,115,223,255)',
+        'rgba(245,122,145,255)',
+        'rgba(252,199,252,255)',
+        'rgba(232,81,147,255)',
+        'rgba(255,58,181,255)',
+        'rgba(217,215,252,255)',
+        'rgba(230,0,76,255)',
+        'rgba(148,0,97,255)',
+        'rgba(174,68,101,255)',
+        'rgba(255,190,190,255)',
+        'rgba(255,235,190,255)',
+        'rgba(255,255,255,255)'
+    ];
+    var fallbackColor = 'rgba(0,0,0,0)';
+     
+    // create legend
+    for (i = 0; i < labels.length; i++) {
+        var label = labels[i];
+        var color = colors[i];
+        var item = document.createElement('div');
+        var key = document.createElement('span');
+        key.className = 'legend-key';
+        key.style.backgroundColor = color;
+         
+        var value = document.createElement('span');
+        value.innerHTML = label;
+        item.appendChild(key);
+        item.appendChild(value);
+        legend.appendChild(item);
+    }
+
+    var circleColor = [
+        'match',
+        ['get', 'CommonName']
+    ];
+    for (i = 0; i < labels.length; i++) {
+        var label = labels[i];
+        var color = colors[i];
+        circleColor.push(label, color);
+    }
+    circleColor.push(fallbackColor);
+
+    map.on('load', function () {
+        map.addSource('cherry-trees-2020', {
+            type: 'geojson',
+            data: 'cherry-blossoms.geojson'
+        });
+
+        map.addLayer({
+            id: 'cherry-trees-2020',
+            type: 'circle',
+            source: 'cherry-trees-2020',
+            paint: {
+                // make circles larger as the user zooms from z12 to z22
+                'circle-radius': {
+                    'base': 1.75,
+                    'stops': [
+                        [12, 2],
+                        [22, 50]
+                    ]
+                },
+                // color circles by flower, using a match expression
+                // https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions-match
+                'circle-color': circleColor
+            }
+        });
+
+        map.addSource('dc-ortho-2019-april-23-res-3-inch', {
+            'type': 'raster',
+            // use the tiles option to specify a WMS tile source URL
+            // https://docs.mapbox.com/mapbox-gl-js/style-spec/sources/
+            'tiles': [
+                'https://maps2.dcgis.dc.gov/dcgis/services/DCGIS_DATA/Ortho2019_WebMercator/MapServer/WMSServer?bbox={bbox-epsg-3857}&format=image/png&service=WMS&version=1.1.1&request=GetMap&srs=EPSG:3857&width=256&height=256&layers=0&styles=default&transparent=true'
+            ],
+            'attribution': '<a href="https://dcgis.maps.arcgis.com/home/item.html?id=b616560ece24412fa9450e997006402c">DCGIS Open Data</a>',
+            'maxzoom': 19,
+            'tileSize': 256
+        });
+
+        var layerList = document.getElementById('menu');
+        var inputs = layerList.getElementsByTagName('input');
+
+        var layers = map.getStyle().layers;
+        // Find the index of the first symbol layer in the map style
+        var firstSymbolId;
+        for (var i = 0; i < layers.length; i++) {
+            if (layers[i].type === 'symbol') {
+                firstSymbolId = layers[i].id;
+                break;
+            }
+        }
+
+        function switchLayer(layer) {
+            var layerId = layer.target.id;
+            if (layerId === 'dcgis') {
+                map.addLayer(
+                    {
+                        'id': 'dc-ortho-2019-april-23-res-3-inch',
+                        'type': 'raster',
+                        'source': 'dc-ortho-2019-april-23-res-3-inch'
+                    },
+                    firstSymbolId
+                );
+            }
+            else {
+                map.removeLayer('dc-ortho-2019-april-23-res-3-inch');
+            }
+        }
+
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].onclick = switchLayer;
+        }
+
+    });
+
+    map.addControl(
+        new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken,
+            mapboxgl: mapboxgl,
+            marker: false,
+            collapsed: true
+        })
+    );
+
+    map.addControl(
+        new mapboxgl.GeolocateControl({
+            positionOptions: {
+                enableHighAccuracy: true
+            },
+            trackUserLocation: true
+        })
+    );
+</script>
+
+</body>
+</html>
