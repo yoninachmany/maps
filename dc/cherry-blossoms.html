@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>DC Cherry Blossom Map</title>
+<title>Cherry Blossoms</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.js"></script>
@@ -14,30 +14,24 @@ body { margin: 0; padding: 0; }
 <body>
 
 <style>
-    #menu {
-        position: absolute;
-        background: #efefef;
-        padding: 10px;
-        font-family: 'Open Sans', sans-serif;
-    }
     .map-overlay {
         position: absolute;
-        background: #efefef;
         bottom: 0;
         right: 0;
-        margin-right: 20px;
-        font-family: 'Open Sans', sans-serif;
-        font-size: small;
+        background: #efefef;
+        margin-right: 10px;
+        font-family: Arial, sans-serif;
+        font-size: smaller;
         overflow: auto;
         border-radius: 3px;
     }
     #legend {
         padding: 10px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        line-height: 18px;
-        height: 220px;
+        line-height: 15px;
+        height: 180px;
         margin-bottom: 40px;
-        width: 100;
+        width: 100px;
     }
     .legend-key {
         display: inline-block;
@@ -55,13 +49,6 @@ body { margin: 0; padding: 0; }
 <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
 <div id="map"></div>
 
-<div id="menu">
-    <input id="mapbox" type="radio" name="rtoggle" value="mapbox" checked="checked">
-    <label for="mapbox">Sharper imagery</label>
-    <input id="dcgis" type="radio" name="rtoggle" value="dcgis">
-    <label for="dcgis">Newer imagery</label>
-</div>
-
 <div class="map-overlay" id="legend"></div>
 
 <script>
@@ -69,8 +56,8 @@ body { margin: 0; padding: 0; }
     var map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/satellite-streets-v11',
-        center: [-77.0146, 38.908],
-        zoom: 11.16,
+        center: [-77.033, 38.8955],
+        zoom: 12.1,
         hash: true
     });
 
@@ -90,18 +77,18 @@ body { margin: 0; padding: 0; }
     ];
     var labels = [
         'Cherry spp.',
-        'Yoshino Cherry',
-        'Okame Cherry',
-        'Cherry, Higan',
-        'Kwanzan Cherry',
-        'Oshima Cherry',
-        'Cherry, Sour',
-        'Cherry, Black',
-        'Cherry, Sweet',
-        'Cherry, Sargent',
+        'Yoshino',
+        'Okame',
+        'Higan',
+        'Kwanzan',
+        'Oshima',
+        'Sour',
+        'Black',
+        'Sweet',
+        'Sargent',
         'Chokecherry',
-        'Cherry (Snowgoose)'
-    ]
+        'Snowgoose'
+    ];
     var colors = [
         'rgba(255,115,223,255)',
         'rgba(245,122,145,255)',
@@ -134,6 +121,7 @@ body { margin: 0; padding: 0; }
         legend.appendChild(item);
     }
 
+    // create match expression
     var circleColor = [
         'match',
         ['get', 'CommonName']
@@ -164,26 +152,21 @@ body { margin: 0; padding: 0; }
                         [22, 50]
                     ]
                 },
-                // color circles by flower, using a match expression
+                // color circles by type, using a match expression
                 // https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions-match
                 'circle-color': circleColor
             }
         });
 
-        map.addSource('dc-ortho-2019-april-23-res-3-inch', {
+        map.addSource('dc-ortho-april-23-2019-3inch-res', {
             'type': 'raster',
             // use the tiles option to specify a WMS tile source URL
             // https://docs.mapbox.com/mapbox-gl-js/style-spec/sources/
             'tiles': [
-                'https://maps2.dcgis.dc.gov/dcgis/services/DCGIS_DATA/Ortho2019_WebMercator/MapServer/WMSServer?bbox={bbox-epsg-3857}&format=image/png&service=WMS&version=1.1.1&request=GetMap&srs=EPSG:3857&width=256&height=256&layers=0&styles=default&transparent=true'
+                'https://imagery.dcgis.dc.gov/dcgis/rest/services/Ortho/Ortho_2019/ImageServer/exportImage?f=image&bbox={bbox-epsg-3857}&imageSR=3857&bboxSR=3857&size=512%2C512'
             ],
-            'attribution': '<a href="https://dcgis.maps.arcgis.com/home/item.html?id=b616560ece24412fa9450e997006402c">DCGIS Open Data</a>',
-            'maxzoom': 19,
-            'tileSize': 256
+            'attribution': '<a href="https://opendata.dc.gov/pages/dc-from-above">DCGIS Open Data</a>'
         });
-
-        var layerList = document.getElementById('menu');
-        var inputs = layerList.getElementsByTagName('input');
 
         var layers = map.getStyle().layers;
         // Find the index of the first symbol layer in the map style
@@ -195,27 +178,14 @@ body { margin: 0; padding: 0; }
             }
         }
 
-        function switchLayer(layer) {
-            var layerId = layer.target.id;
-            if (layerId === 'dcgis') {
-                map.addLayer(
-                    {
-                        'id': 'dc-ortho-2019-april-23-res-3-inch',
-                        'type': 'raster',
-                        'source': 'dc-ortho-2019-april-23-res-3-inch'
-                    },
-                    firstSymbolId
-                );
-            }
-            else {
-                map.removeLayer('dc-ortho-2019-april-23-res-3-inch');
-            }
-        }
-
-        for (var i = 0; i < inputs.length; i++) {
-            inputs[i].onclick = switchLayer;
-        }
-
+        map.addLayer(
+            {
+                'id': 'dc-ortho-april-23-2019-3inch-res',
+                'type': 'raster',
+                'source': 'dc-ortho-april-23-2019-3inch-res'
+            },
+            firstSymbolId
+        );
     });
 
     map.addControl(
@@ -227,14 +197,6 @@ body { margin: 0; padding: 0; }
         })
     );
 
-    map.addControl(
-        new mapboxgl.GeolocateControl({
-            positionOptions: {
-                enableHighAccuracy: true
-            },
-            trackUserLocation: true
-        })
-    );
 </script>
 
 </body>
