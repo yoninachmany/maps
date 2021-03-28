@@ -40,6 +40,10 @@ body { margin: 0; padding: 0; }
         height: 10px;
         margin-right: 5px;
     }
+    .mapboxgl-popup {
+        max-width: 400px;
+        font: 12px Arial, sans-serif;
+    }
 </style>
 
 <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js"></script>
@@ -156,6 +160,35 @@ body { margin: 0; padding: 0; }
                 // https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions-match
                 'circle-color': circleColor
             }
+        });
+
+        // When a click event occurs on a feature in the places layer, open a popup at the
+        // location of the feature, with description HTML from its properties.
+        map.on('click', 'cherry-trees-2020', function (e) {
+            var coordinates = e.features[0].geometry.coordinates.slice();
+            var name = e.features[0].properties.CommonName;
+             
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+            }
+             
+            new mapboxgl.Popup()
+                .setLngLat(coordinates)
+                .setHTML(name)
+                .addTo(map);
+        });
+         
+        // Change the cursor to a pointer when the mouse is over the places layer.
+        map.on('mouseenter', 'cherry-trees-2020', function () {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+         
+        // Change it back to a pointer when it leaves.
+        map.on('mouseleave', 'cherry-trees-2020', function () {
+            map.getCanvas().style.cursor = '';
         });
 
         map.addSource('dc-ortho-april-23-2019-3inch-res', {
