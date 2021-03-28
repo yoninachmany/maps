@@ -126,10 +126,10 @@ body { margin: 0; padding: 0; }
         'match',
         ['get', 'CommonName']
     ];
-    for (i = 0; i < labels.length; i++) {
-        var label = labels[i];
+    for (i = 0; i < values.length; i++) {
+        var value = values[i];
         var color = colors[i];
-        circleColor.push(label, color);
+        circleColor.push(value, color);
     }
     circleColor.push(fallbackColor);
 
