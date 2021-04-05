@@ -168,7 +168,7 @@
 
             this.camera.projectionMatrix = m.multiply(l);
             this.renderer.resetState();
-            this.scene.rotation.y -= 0.01;
+            this.scene.rotation.y -= 0.005;
             this.renderer.render(this.scene, this.camera);
             this.map.triggerRepaint();
         }
