@@ -1,0 +1,50 @@
+{
+	"version": "2.0",
+	"name": "1120",
+	"description": "",
+	"points": 1656912113,
+	"projection": "",
+	"hierarchy": {
+		"firstChunkSize": 3828, 
+		"stepSize": 4, 
+		"depth": 11
+	},
+	"offset": [389400, 124200.01000000001, -63.230000000000004],
+	"scale": [0.01, 0.01, 0.01],
+	"spacing": 187.49984374999985,
+	"boundingBox": {
+		"min": [389400, 124200.01000000001, -63.230000000000004], 
+		"max": [413399.97999999998, 148199.98999999999, 23936.749999999982]
+	},
+	"encoding": "BROTLI",
+	"attributes": [
+		{
+			"name": "position",
+			"description": "",
+			"size": 12,
+			"numElements": 3,
+			"elementSize": 4,
+			"type": "int32",
+			"min": [389400, 124200.01000000001, -62.82],
+			"max": [408599.98999999999, 148199.98999999999, 467.75]
+		},{
+			"name": "classification",
+			"description": "",
+			"size": 1,
+			"numElements": 1,
+			"elementSize": 1,
+			"type": "uint8",
+			"min": [1],
+			"max": [20]
+		},{
+			"name": "rgb",
+			"description": "",
+			"size": 6,
+			"numElements": 3,
+			"elementSize": 2,
+			"type": "uint16",
+			"min": [1, 0, 0],
+			"max": [255, 255, 255]
+		}
+	]
+}
