@@ -56,7 +56,7 @@
 		});
 		
 		// Load and add point cloud to scene
-		Potree.loadPointCloud("./pointclouds/dc/metadata.json", "dc", e => {
+		Potree.loadPointCloud("https://storage.googleapis.com/potree-cities/dc/metadata.json", "dc", e => {
 			let scene = viewer.scene;
 			let pointcloud = e.pointcloud;
 			
