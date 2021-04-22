@@ -52,11 +52,26 @@
 		viewer.loadGUI(() => {
 			viewer.setLanguage('en');
 			$("#menu_tools").next().show();
-			$("#menu_clipping").next().show();
+			viewer.toggleSidebar();
+		});
+
+		viewer.setClassifications({
+			0:  { visible: false, name: 'Never Classified'          , color: [0.5,  0.5,  0.5,  1.0] },
+			1:  { visible: false, name: 'Processed but Unclassified', color: [0.5,  0.5,  0.5,  1.0] },
+			2:  { visible: true , name: 'Bare Earth Ground'         , color: [0.63, 0.32, 0.18, 1.0] },
+			3:  { visible: true , name: 'Low Vegetation'            , color: [0.0,  1.0,  0.0,  1.0] },
+			4:  { visible: true , name: 'Medium Vegetation'         , color: [0.0,  0.8,  0.0,  1.0] },
+			5:  { visible: true , name: 'High Vegetation'           , color: [0.0,  0.6,  0.0,  1.0] },
+			6:  { visible: true , name: 'Buildings'                 , color: [1.0,  0.66, 0.0,  1.0] },
+			7:  { visible: false, name: 'Low Point (Noise)'         , color: [1.0,  0.0,  1.0,  1.0] },
+			9:  { visible: true , name: 'Water'                     , color: [0.0,  0.0,  1.0,  1.0] },
+			17: { visible: true , name: 'Bridge Decks'              , color: [1.0,  0.0,  0.0,  1.0] },
+			18: { visible: false, name: 'High Noise'                , color: [1.0,  1.0,  0.0,  1.0] },
+			20: { visible: false, name: 'Ignored Ground'            , color: [0.3,  0.6,  0.6,  0.5] },
 		});
 		
 		// Load and add point cloud to scene
-		Potree.loadPointCloud("https://storage.googleapis.com/potree-cities/dc/metadata.json", "dc", e => {
+		Potree.loadPointCloud("https://potree-cities.storage.googleapis.com/dc/metadata.json", "dc", e => {
 			let scene = viewer.scene;
 			let pointcloud = e.pointcloud;
 			
@@ -72,7 +87,5 @@
 		});
 
 	</script>
-	
-	
   </body>
 </html>
