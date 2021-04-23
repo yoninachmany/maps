@@ -5,7 +5,7 @@
 	<meta name="description" content="">
 	<meta name="author" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-	<title>Potree Viewer</title>
+	<title>DC from Above</title>
 
 	<link rel="stylesheet" type="text/css" href="./build/potree/potree.css">
 	<link rel="stylesheet" type="text/css" href="./libs/jquery-ui/jquery-ui.min.css">
@@ -47,12 +47,11 @@
 		viewer.setPointBudget(2_000_000);
 		viewer.loadSettingsFromURL();
 		
-		viewer.setDescription("June 2020 point cloud (1.65T points), colorized by 2018 imagery");
+		viewer.setDescription("<a target='_blank' href='https://opendata.dc.gov/pages/dc-from-above'>DC LiDAR point cloud</a> from June 2020, colorized by April 2019 orthoimagery (1,656,912,113 points)");
 		
 		viewer.loadGUI(() => {
 			viewer.setLanguage('en');
 			$("#menu_tools").next().show();
-			viewer.toggleSidebar();
 		});
 
 		viewer.setClassifications({
@@ -83,7 +82,8 @@
 			
 			scene.addPointCloud(pointcloud);
 			
-			viewer.fitToScreen();
+			viewer.setTopView();
+			viewer.fitToScreen(0.25);
 		});
 
 	</script>
