@@ -48,7 +48,7 @@
         hash: true,
         antialias: true, // create the gl context with MSAA antialiasing, so custom layers are antialiased
         style: "mapbox://styles/yoninachmanymapbox/cklzkai5n6sqo17qfvrmupn07",
-        customAttribution: "<a href='https://svs.gsfc.nasa.gov/4720' target='_blank'>NASA's Scientific Visualization Studio</a>",
+        customAttribution: "<a href='https://svs.gsfc.nasa.gov/4720' target='_blank'>NASA's Scientific Visualization Studio</a> | <a href='https://3d.si.edu/object/3d/neil-armstrong-spacesuit:d8c63ba6-4ebc-11ea-b77f-2e728ce88125' target='_blank'>The Smithsonian</a>",
         transformRequest: (url, type) => {
           if (type === "Tile" && tilesetRegex.test(url) && !tilesetID.startsWith("mapbox")) {
             return { url: url.replace("webp", "pngraw") };
@@ -174,6 +174,107 @@
         }
       };
 
+    // parameters to ensure the model is georeferenced correctly on the map:
+    // Mare Tranquillitatis (Sea of Tranquility)
+    var modelOriginSuit = [27.03, -3.674];
+    var modelAltitudeSuit = 200000;
+    var modelRotateSuit = [Math.PI / 2, 0, 0];
+
+    var modelAsMercatorCoordinateSuit = mapboxgl.MercatorCoordinate.fromLngLat(
+        modelOriginSuit,
+        modelAltitudeSuit
+    );
+
+    // transformation parameters to position, rotate and scale the 3D model onto the map
+    var modelTransformSuit = {
+        translateX: modelAsMercatorCoordinateSuit.x,
+        translateY: modelAsMercatorCoordinateSuit.y,
+        translateZ: modelAsMercatorCoordinateSuit.z,
+        rotateX: modelRotateSuit[0],
+        rotateY: modelRotateSuit[1],
+        rotateZ: modelRotateSuit[2],
+        /* Since our 3D model is in real world meters, a scale transform needs to be
+         * applied since the CustomLayerInterface expects units in MercatorCoordinates.
+         */
+        scale: modelAsMercatorCoordinateSuit.meterInMercatorCoordinateUnits()*10000
+    };
+
+    // configuration of the custom layer for a 3D model per the CustomLayerInterface
+    var suitLayer = {
+        id: 'suit',
+        type: 'custom',
+        renderingMode: '3d',
+        onAdd: function (map, gl) {
+            this.camera = new THREE.Camera();
+            this.scene = new THREE.Scene();
+
+            // create two three.js lights to illuminate the model
+            var directionalLight = new THREE.DirectionalLight(0xffffff);
+            directionalLight.position.set(0, -70, 100).normalize();
+            this.scene.add(directionalLight);
+
+            var directionalLight2 = new THREE.DirectionalLight(0xffffff);
+            directionalLight2.position.set(0, 70, 100).normalize();
+            this.scene.add(directionalLight2);
+
+            // use the three.js GLTF loader to add the 3D model to the three.js scene
+            var loader = new THREE.GLTFLoader();
+            loader.load(
+                'models/nasm/glb/full_suit_combined_scale.glb',
+                function (glb) {
+                    this.scene.add(glb.scene);
+                }.bind(this)
+            );
+            this.map = map;
+
+            // use the Mapbox GL JS map canvas for three.js
+            this.renderer = new THREE.WebGLRenderer({
+                canvas: map.getCanvas(),
+                context: gl,
+                antialias: true
+            });
+
+            this.renderer.autoClear = false;
+        },
+        render: function (gl, matrix) {
+            var rotationX = new THREE.Matrix4().makeRotationAxis(
+                new THREE.Vector3(1, 0, 0),
+                modelTransformSuit.rotateX
+            );
+            var rotationY = new THREE.Matrix4().makeRotationAxis(
+                new THREE.Vector3(0, 1, 0),
+                modelTransformSuit.rotateY
+            );
+            var rotationZ = new THREE.Matrix4().makeRotationAxis(
+                new THREE.Vector3(0, 0, 1),
+                modelTransformSuit.rotateZ
+            );
+
+            var m = new THREE.Matrix4().fromArray(matrix);
+            var l = new THREE.Matrix4()
+                .makeTranslation(
+                    modelTransformSuit.translateX,
+                    modelTransformSuit.translateY,
+                    modelTransformSuit.translateZ
+                )
+                .scale(
+                    new THREE.Vector3(
+                        modelTransformSuit.scale,
+                        -modelTransformSuit.scale,
+                        modelTransformSuit.scale
+                    )
+                )
+                .multiply(rotationX)
+                .multiply(rotationY)
+                .multiply(rotationZ);
+
+            this.camera.projectionMatrix = m.multiply(l);
+            this.renderer.resetState();
+            this.renderer.render(this.scene, this.camera);
+            this.map.triggerRepaint();
+        }
+      };
+
       map.on("load", function() {
         map.addSource("mapbox-dem", {
           type: "raster-dem",
@@ -192,6 +293,7 @@
         );
 
         map.addLayer(customLayer);
+        map.addLayer(suitLayer);
       });
     </script>
   </body>
