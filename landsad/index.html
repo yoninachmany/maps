@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Landsad</title>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.js"></script>
+    <style>
+        body { margin: 0; padding: 0 }
+        html, body, #map { height: 100%; }
+
+        .dg.a {
+            float: left !important;
+        }
+    </style>
+</head>
+
+<body>
+<div id='map'></div>
+
+<script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js'></script>
+<script>
+
+mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55bWFwYm94IiwiYSI6ImNrMTg3dXo4dDAwbHkzYnBob3dtajM4a2kifQ.SNPc6w7pfD_HalkSzRkFKw';
+
+const DEFAULT_MAX = 1.00;
+const DEFAULT_MIN = 0.001;
+const DEFAULT_CONTRAST = 0.001;
+const DEFAULT_HUE_ROTATE = 0.001;
+const DEFAULT_OPACITY = 1.00;
+const DEFAULT_SATURATION = 0.001;
+
+var map = window.map = new mapboxgl.Map({
+    container: 'map',
+    zoom: 0.58,
+    center: [0, 0],
+    pitch: 0,
+    bearing: 0,
+    style: 'mapbox://styles/mapbox/empty-v9',
+    hash: true,
+});
+
+var query = new URLSearchParams(window.location.search);
+var max = parseFloat(query.get("max")) || DEFAULT_MAX;
+var min = parseFloat(query.get("min")) || DEFAULT_MIN;
+var contrast = parseFloat(query.get("contrast")) || DEFAULT_CONTRAST;
+var hueRotate = parseFloat(query.get("hueRotate")) || DEFAULT_HUE_ROTATE;
+var saturation = parseFloat(query.get("saturation")) || DEFAULT_SATURATION;
+
+var DemoRaster = function() {
+    this.brightnessMax = max;
+    this.brightnessMin = min;
+    this.contrast = contrast;
+    this.hueRotate = hueRotate;
+    this.saturation = saturation;
+    this.randomize = function() {
+        max = Math.random();
+        min = Math.random();
+        contrast = 2 * Math.random() - 1;
+        hueRotate = 360 * Math.random();
+        saturation = 2 * Math.random() - 1;
+
+        setPaintQueryGUI({
+            max: max,
+            min: min,
+            contrast: contrast,
+            hueRotate: hueRotate,
+            saturation: saturation
+        });
+    }
+    this.reset = function() {
+        max = DEFAULT_MAX;
+        min = DEFAULT_MIN;
+        contrast = DEFAULT_CONTRAST;
+        hueRotate = DEFAULT_HUE_ROTATE;
+        saturation = DEFAULT_SATURATION;
+
+        setPaintQueryGUI({
+            max: max,
+            min: min,
+            contrast: contrast,
+            hueRotate: hueRotate,
+            saturation: saturation
+        });
+    }
+};
+
+var demoRaster = new DemoRaster();
+
+function setPaintQueryGUI({max, min, contrast, hueRotate, saturation} = {}) {
+    if (typeof max !== 'undefined') {
+        max = Math.round(max * 100) / 100;
+        map.setPaintProperty('satellite', 'raster-brightness-max', max);
+        query.set("max", max);
+        demoRaster.brightnessMax = max;
+    };
+    if (typeof min !== 'undefined') {
+        min = Math.round(min * 100) / 100;
+        map.setPaintProperty('satellite', 'raster-brightness-min', min);
+        query.set("min", min);
+        demoRaster.brightnessMin = min;
+    };
+    if (typeof contrast !== 'undefined') {
+        contrast = Math.round(contrast * 100) / 100;
+        map.setPaintProperty('satellite', 'raster-contrast', contrast);
+        query.set("contrast", contrast);
+        demoRaster.contrast = contrast;
+    };
+    if (typeof hueRotate !== 'undefined') {
+        hueRotate = Math.round(hueRotate * 100) / 100;
+        map.setPaintProperty('satellite', 'raster-hue-rotate', hueRotate);
+        query.set("hueRotate", hueRotate);
+        demoRaster.hueRotate = hueRotate;
+    };
+    if (typeof saturation !== 'undefined') {
+        saturation = Math.round(saturation * 100) / 100;
+        map.setPaintProperty('satellite', 'raster-saturation', saturation);
+        query.set("saturation", saturation);
+        demoRaster.saturation = saturation;
+    };
+    window.history.replaceState({}, '', `${location.pathname}?${query}`);
+};
+
+map.on('style.load', function() {
+    map.addSource("256", {
+      type: "raster",
+      url: "mapbox://mapbox.satellite",
+      tileSize: 256
+    });
+    map.addLayer({
+      id: "satellite",
+      source: "256",
+      type: "raster"
+    });
+
+    setPaintQueryGUI({
+        max: max,
+        min: min,
+        contrast: contrast,
+        hueRotate: hueRotate,
+        saturation: saturation
+    });
+});
+
+window.onload = function() {
+    var gui = new dat.GUI(); // eslint-disable-line
+
+    var raster = gui.addFolder('Raster');
+    var brightnessMax = raster.add(demoRaster, 'brightnessMax', 0.0, 1.0).listen();
+    brightnessMax.onChange((value) => {
+        setPaintQueryGUI({max: value});
+    });
+    var brightnessMin = raster.add(demoRaster, 'brightnessMin', 0.0, 1.0).listen();
+    brightnessMin.onChange((value) => {
+        setPaintQueryGUI({min: value});
+    });
+    var contrast = raster.add(demoRaster, 'contrast', -1.0, 1.0).listen();
+    contrast.onChange((value) => {
+        setPaintQueryGUI({contrast: value});
+    });
+    var hueRotate = raster.add(demoRaster, 'hueRotate', 0.0, 360.0).listen();
+    hueRotate.onChange((value) => {
+        setPaintQueryGUI({hueRotate: value});
+    });
+    var saturation = raster.add(demoRaster, 'saturation', -1.0, 1.0).listen();
+    saturation.onChange((value) => {
+        setPaintQueryGUI({saturation: value});
+    });
+    var randomize = raster.add(demoRaster, 'randomize').name('Randomize');
+    var reset = raster.add(demoRaster, 'reset').name('Reset');
+    raster.open();
+};
+
+</script>
+</body>
+</html>
