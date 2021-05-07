@@ -175,9 +175,8 @@ window.onload = function() {
     saturation.onChange((value) => {
         setPaintQueryGUI({saturation: value});
     });
-    var randomize = raster.add(demoRaster, 'randomize').name('Randomize');
-    var reset = raster.add(demoRaster, 'reset').name('Reset');
-    raster.open();
+    var randomize = gui.add(demoRaster, 'randomize').name('Randomize');
+    var reset = gui.add(demoRaster, 'reset').name('Reset');
 };
 
 </script>
