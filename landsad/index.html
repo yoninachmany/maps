@@ -119,7 +119,7 @@ function setPaintQueryGUI({max, min, contrast, hueRotate, saturation} = {}) {
         query.set("saturation", saturation);
         demoRaster.saturation = saturation;
     };
-    window.history.replaceState({}, '', `${location.pathname}?${query}`);
+    window.history.replaceState({}, '', `${location.pathname}?${query}${window.location.hash}`);
 };
 
 map.on('style.load', function() {
