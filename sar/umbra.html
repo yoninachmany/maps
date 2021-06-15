@@ -47,6 +47,16 @@ body { margin: 0; padding: 0; }
     ];
 
     var beforeMap = new mapboxgl.Map({
+        container: 'before',
+        style: 'mapbox://styles/mapbox/satellite-v9',
+        center: [0, 0],
+        zoom: 0,
+        hash: true,
+        maxBounds: bounds
+    });
+    beforeMap.fitBounds(bounds);
+
+    var afterMap = new mapboxgl.Map({
         container: 'after',
         style: {
             'version': 8,
@@ -71,16 +81,6 @@ body { margin: 0; padding: 0; }
         },
         center: [-119.89227, 34.42624],
         zoom: 14.55,
-        hash: true,
-        maxBounds: bounds
-    });
-    beforeMap.fitBounds(bounds);
-
-    var afterMap = new mapboxgl.Map({
-        container: 'before',
-        style: 'mapbox://styles/mapbox/satellite-v9',
-        center: [0, 0],
-        zoom: 0,
         hash: true,
         maxBounds: bounds
     });
