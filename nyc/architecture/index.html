@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nearmap Photogrammetry</title>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=no'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js'></script>
+    <script src='https://unpkg.com/deck.gl@latest/dist.min.js'></script>
+    <script src='https://unpkg.com/@loaders.gl/3d-tiles@latest/dist/dist.min.js'></script>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v2.1.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.1.0/mapbox-gl.css' rel='stylesheet'/>
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body, #map { height: 100%; }
+    </style>
+</head>
+
+<body>
+<div id='map'></div>
+
+
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiYWxsYW53YWxrZXIiLCJhIjoiY2phbHVlOHQ4MnZscDMycGJoaTdiaHRxOCJ9.OYLAoMVg6e3Ih4r65WJuvA';
+
+const {MapboxLayer, Tile3DLayer} = deck;
+const {CesiumIonLoader} = loaders;
+
+const TILESET_URL = 'https://assets.cesium.com/7162/tileset.json';
+const ION_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzMGY4ODczYy1mNTk4LTRiMDUtYmIxYy0xZWYwOWZmMGY4NjQiLCJpZCI6NDQsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJhc3NldHMiOlsxLDIsMyw0LDYxOTMsNjI3Myw3MTYyLDczNTMsNzE0Ml0sImlhdCI6MTU0MTYxODM0NX0.lWnGs9ySXO4QK3HagcMsDpZ8L01DpmUDQm38-2QAQuE';
+
+const LOCATIONS = {
+    'Chelsea Piers': {
+        center: [-74.005255, 40.748036],
+        zoom: 15.99,
+        pitch: 76,
+        bearing: 94.4
+    },
+    'Hudson Yards': {
+        center: [-73.99932, 40.752876],
+        zoom: 15.96,
+        pitch: 83,
+        bearing: 123.2
+    },
+    'The Landmark': {
+        center: [-73.989909, 40.770977],
+        zoom: 16.73,
+        pitch: 84.8,
+        bearing: 82
+    },
+    'West Side': {
+        center: [-73.984646, 40.771174],
+        zoom: 15.84,
+        pitch: 81,
+        bearing: 128
+    },
+    'United Nations': {
+        center: [-73.97273, 40.751184],
+        zoom: 16.07,
+        pitch: 77,
+        bearing: -69.8
+    },
+    'Con Edison': { 
+        center: [-73.974379, 40.730353],
+        zoom: 16.63,
+        pitch: 85,
+        bearing: -21
+    },
+    'Williamsburg Bridge': {
+        center: [-73.976216, 40.71492],
+        zoom: 16.34,
+        pitch: 82,
+        bearing: -74.6
+    },
+    'Brooklyn Bridge': {
+        center: [-73.997655, 40.705648],
+        zoom: 16.9,
+        pitch: 85,
+        bearing: -70.6
+    },
+    'The Battery': {
+        center: [-74.00761, 40.710665],
+        zoom: 15.26,
+        pitch: 84,
+        bearing: 26.4
+    }
+};
+
+var Demo3D = function() {
+    this.destination = 'The Battery';
+};
+
+var demo3d = new Demo3D();
+
+window.onload = function() {
+    var gui = new dat.GUI(); // eslint-disable-line
+
+    var destination = gui.add(demo3d, 'destination', Object.keys(LOCATIONS));    
+    destination.onFinishChange((value) => {
+        map.jumpTo(LOCATIONS[value]);
+    });
+};
+
+var map = window.map = new mapboxgl.Map({
+    container: 'map',
+    zoom: LOCATIONS['The Battery'].zoom,    
+    center: LOCATIONS['The Battery'].center,
+    pitch: LOCATIONS['The Battery'].pitch,
+    bearing: LOCATIONS['The Battery'].bearing,
+    style: 'mapbox://styles/mapbox/satellite-v9',
+    hash: true
+});
+
+map.on('style.load', function() {
+    // map.addSource('mapbox-dem', {
+    //     'type': 'raster-dem',
+    //     'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+    //     'tileSize': 512,
+    //     'maxzoom': 14
+    // });
+    // map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+
+    map.addLayer({
+        'id': 'sky',
+        'type': 'sky',
+        'paint': {
+            'sky-type': 'atmosphere',
+            'sky-atmosphere-sun-intensity': 15
+        }
+    });
+
+    map.addLayer(new MapboxLayer({
+        id: 'point-cloud',
+        type: Tile3DLayer,
+        data: TILESET_URL,
+        loader: CesiumIonLoader,
+        loadOptions: { 'cesium-ion': {accessToken: ION_TOKEN} }
+    }));
+});
+
+</script>
+</body>
+</html>
