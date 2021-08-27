@@ -42,7 +42,8 @@ const map = new mapboxgl.Map({
   center: [-73.96888,40.73798],
   zoom: 10,
   antialias: true,
-  hash: true
+  hash: true,
+  customAttribution: '<a href="https://data.cityofnewyork.us/Transportation/Subway-Lines/3qz8-muuu" target="_blank">NYC Open Data</a>'
 });
 
 map.on('load', () => {
