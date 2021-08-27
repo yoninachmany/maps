@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Subway Hops</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  </style>
+</head>
+
+<body>
+<div id="map"></div>
+</body>
+
+<script type="text/javascript">
+
+mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55bWFwYm94IiwiYSI6ImNrMTg3dXo4dDAwbHkzYnBob3dtajM4a2kifQ.SNPc6w7pfD_HalkSzRkFKw';
+
+const {MapboxLayer, ArcLayer} = deck;
+
+// http://web.mta.info/developers/resources/line_colors.htm
+const LINE_COLORS = {
+  '1': [238, 53, 46],
+  '4': [0, 147, 60],
+  '7': [185, 51, 173],
+  'A': [0, 57, 166],
+  'B': [255, 99, 25],
+  'G': [108, 190, 69],
+  'J': [153, 102, 51],
+  'L': [167, 169, 172],
+  'N': [252, 204, 10],
+};
+
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/yoninachmanymapbox/cksrui6pr2m3h17n0uqje6ta4',
+  center: [-73.96888,40.73798],
+  zoom: 10,
+  antialias: true,
+  hash: true
+});
+
+map.on('load', () => {
+
+  const subwayLinesLayer = new deck.MapboxLayer({
+    id: 'subway-lines',
+    type: ArcLayer,
+    data: './Subway Lines.geojson',
+    dataTransform: d => d.features,
+    getSourcePosition: f => f.geometry.coordinates[0],
+    getTargetPosition: f => f.geometry.coordinates[f.geometry.coordinates.length-1],
+    getSourceColor: f => LINE_COLORS[f.properties.rt_symbol],
+    getTargetColor: f => LINE_COLORS[f.properties.rt_symbol],
+    getWidth: f => f.properties.name.split('-').length
+  });
+
+  map.addLayer(subwayLinesLayer);
+
+});
+
+</script>
+</html>
