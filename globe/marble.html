@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Blue/Black Marble</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://www.unpkg.com/mapbox-gl@2.7.0-alpha.1/dist/mapbox-gl.css" rel="stylesheet">
+<script src="https://www.unpkg.com/mapbox-gl@2.7.0-alpha.1/dist/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<!-- Load the `mapbox-gl-geocoder` plugin. -->
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css" type="text/css">
+ 
+<!-- Promise polyfill script is required -->
+<!-- to use Mapbox GL Geocoder in IE 11. -->
+<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
+<style>
+    body {
+        overflow: hidden;
+    }
+
+    body * {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+    }
+</style>
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css" type="text/css">
+<div id="comparison-container">
+    <div id="before" class="map"></div>
+    <div id="after" class="map"></div>
+</div>
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const beforeMap = new mapboxgl.Map({
+        container: 'before',
+        style: 'mapbox://styles/mapbox/satellite-streets-v11',
+        center: [32.85, 34.78],
+        zoom: 3.39,
+        projection: 'globe',
+        hash: true
+    });
+    beforeMap.on('load', () => {
+        beforeMap.addSource('blue-marble', {
+            'type': 'raster',
+            'tiles': [
+                'https://tiles.maps.eox.at/wmts/1.0.0/bluemarble_3857/default/g/{z}/{y}/{x}.jpg',
+            ],
+            'tileSize': 256,
+            'attribution': 'Blue Marble { <a href="https://www.nasa.gov/">NASA</a> }'
+        });
+        beforeMap.addLayer({
+            'id': 'blue-marble',
+            'type': 'raster',
+            'source': 'blue-marble',
+            'minzoom': 0,
+            'maxzoom': 22
+        });
+        beforeMap.removeLayer('satellite');
+        beforeMap.removeSource('mapbox://mapbox.satellite');
+    });
+    
+
+    const afterMap = new mapboxgl.Map({
+        container: 'after',
+        style: 'mapbox://styles/mapbox/satellite-streets-v11',
+        center: [32.85, 34.78],
+        zoom: 3.39,
+        projection: 'globe',
+        hash: true
+    });
+    afterMap.on('load', () => {
+        afterMap.addSource('black-marble', {
+            'type': 'raster',
+            'tiles': [
+                'https://tiles.maps.eox.at/wmts/1.0.0/blackmarble_3857/default/g/{z}/{y}/{x}.jpg',
+            ],
+            'tileSize': 256,
+            'attribution': 'Black Marble { <a href="https://www.nasa.gov/">NASA</a> }'
+        });
+        afterMap.addLayer({
+            'id': 'black-marble',
+            'type': 'raster',
+            'source': 'black-marble',
+            'minzoom': 0,
+            'maxzoom': 22
+        });
+        afterMap.removeLayer('satellite');
+        afterMap.removeSource('mapbox://mapbox.satellite');
+
+
+        afterMap.addControl(
+            new MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
+                mapboxgl: mapboxgl,
+                marker: false,
+                collapsed: true
+            })
+        );
+    });
+
+    // A selector or reference to HTML element
+    const container = '#comparison-container';
+
+    const map = new mapboxgl.Compare(beforeMap, afterMap, container, {
+        // Set this to enable comparing two maps by mouse movement:
+        // mousemove: true
+    });
+</script>
+
+</body>
+</html>
