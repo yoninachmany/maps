@@ -71,7 +71,7 @@ body { margin: 0; padding: 0; }
             'source': 'blue-marble',
             'minzoom': 0,
             'maxzoom': 22
-        });
+        }, beforeMap.getStyle().layers[1].id);
         beforeMap.removeLayer('satellite');
         beforeMap.removeSource('mapbox://mapbox.satellite');
     });
@@ -100,7 +100,7 @@ body { margin: 0; padding: 0; }
             'source': 'black-marble',
             'minzoom': 0,
             'maxzoom': 22
-        });
+        }, afterMap.getStyle().layers[1].id);
         afterMap.removeLayer('satellite');
         afterMap.removeSource('mapbox://mapbox.satellite');
 
