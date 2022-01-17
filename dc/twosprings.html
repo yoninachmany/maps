@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Two Springs</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet"/>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+    <style>
+      body { margin: 0; padding: 0; }
+      #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+      #menu { position: absolute; background: #efefef; padding: 10px; font-family: 'Open Sans', sans-serif; }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="menu">
+    <input id="ortho2021" type="radio" name="rtoggle" value="ortho2021" checked="checked">
+    <label for="ortho2021">March 11, 2021</label>
+    <input id="ortho2019" type="radio" name="rtoggle" value="ortho2019">
+    <label for="ortho2019">April 23, 2019</label>
+    </div>
+
+    <!-- Load the `mapbox-gl-geocoder` plugin. -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" type="text/css">
+
+    <!-- Promise polyfill script is required -->
+    <!-- to use Mapbox GL Geocoder in IE 11. -->
+    <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
+
+    <script>
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoieW9uaW5hY2htYW55bWFwYm94IiwiYSI6ImNrMTg3dXo4dDAwbHkzYnBob3dtajM4a2kifQ.SNPc6w7pfD_HalkSzRkFKw";
+        const tilesetID = "yoninachmanymapbox.dc-ndsm";
+        let style = {
+          version: 8,
+          sources: {
+            ortho2019: {
+              type: "raster",
+              tiles: ['https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Ortho2019_WebMercator/MapServer/tile/{z}/{y}/{x}'],
+              tileSize: 256,
+              attribution: '<a href="https://opendata.dc.gov/pages/dc-from-above">DCGIS Open Data</a>',
+            },
+            ortho2021: {
+              type: "raster",
+              tiles: ['https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Ortho2021_WebMercator/MapServer/tile/{z}/{y}/{x}'],
+              tileSize: 256,
+              attribution: '<a href="https://opendata.dc.gov/pages/dc-from-above">DCGIS Open Data</a>',
+            },
+            nDSM: {
+              type: "raster-dem",
+              url: `mapbox://${tilesetID}`,
+              tileSize: 512,
+              bounds: [-77.12237053877654, 38.78548110756374, -76.90071308337018, 39.00174598183472],
+              minzoom: 14,
+              attribution: '<a href="https://opendata.dc.gov/pages/dc-from-above">DCGIS Open Data</a>'
+            }
+          },
+          layers: [
+            {
+              id: "ortho2019",
+              type: "raster",
+              source: "ortho2019",
+              layout: {
+                visibility: 'none'
+              },
+            },
+            {
+              id: "ortho2021",
+              type: "raster",
+              source: "ortho2021"
+            }
+          ]
+        };
+        const tilesetRegex = new RegExp(`${tilesetID}/[0-9]+\/[0-9]+\/[0-9]+`);
+        const map = new mapboxgl.Map({
+          container: "map",
+          zoom: 10.84,
+          center: [-77.0146, 38.8938],
+          hash: true,
+          style: style,
+          transformRequest: (url, type) => {
+            if (type === "Tile" && tilesetRegex.test(url) && !tilesetID.startsWith("mapbox")) {
+              return { url: url.replace("webp", "pngraw") };
+            }
+          }
+        });
+
+        const layerList = document.getElementById('menu');
+        const inputs = layerList.getElementsByTagName('input');
+
+        map.on("load", function() {
+          // add the DEM source as a terrain layer with exaggerated height
+          map.setTerrain({ source: "nDSM", exaggeration: 1 });
+
+          for (const input of inputs) {
+            input.onclick = (layer) => {
+              const layerId = layer.target.id;
+              if (layerId === "ortho2019") {
+                map.setLayoutProperty('ortho2019', 'visibility', 'visible');
+                map.setLayoutProperty('ortho2021', 'visibility', 'none');
+              }
+              else {
+                map.setLayoutProperty('ortho2021', 'visibility', 'visible');
+                map.setLayoutProperty('ortho2019', 'visibility', 'none');
+              }
+              map.setTerrain({ source: "nDSM", exaggeration: 1 });
+            };
+          }
+
+          // add a sky layer that will show when the map is highly pitched
+          map.addLayer({
+            id: "sky",
+            type: "sky",
+            paint: {
+              "sky-type": "atmosphere",
+              "sky-atmosphere-sun": [0.0, 0.0],
+              "sky-atmosphere-sun-intensity": 15
+            }
+          });
+
+          // Add the geocoder control to the map.
+          map.addControl(
+              new MapboxGeocoder({
+                  accessToken: mapboxgl.accessToken,
+                  mapboxgl: mapboxgl,
+                  marker: false,
+                  collapsed: true
+              })
+          );
+        });
+    </script>
+  </body>
+</html>
