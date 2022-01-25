@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Infrared NYC</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    </style>
+</head>
+<body>
+<style>
+    body {
+        overflow: hidden;
+    }
+     
+    body * {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+     
+    .map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+    }
+</style>
+<div id="comparison-container">
+    <div id="before" class="map"></div>
+    <div id="after" class="map"></div>
+</div>
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55bWFwYm94IiwiYSI6ImNrMTg3dXo4dDAwbHkzYnBob3dtajM4a2kifQ.SNPc6w7pfD_HalkSzRkFKw';
+    let beforeStyle = {
+      version: 8,
+      sources: {
+        ortho2020cir: {
+          'type': 'raster',
+          'tiles': ['https://orthos.its.ny.gov/arcgis/rest/services/wms/2020_cir/MapServer/export?bbox={bbox-epsg-3857}&format=png&transparent=true&f=image'],
+          'tileSize': 256,
+          'attribution': '<a href="https://orthos.its.ny.gov/arcgis/rest/services/wms/2020/MapServer">NYS ITS GIS Program Office</a>'
+        }
+      },
+      layers: [
+        {
+          id: 'ortho2020cir',
+          type: 'raster',
+          source: 'ortho2020cir',
+        }
+      ]
+    };
+    const beforeMap = new mapboxgl.Map({
+        container: 'before',
+        style: beforeStyle,
+        center: [-73.96332, 40.78585],
+        zoom: 14,
+        bearing: 28.8,
+        hash: true
+    });
+    beforeMap.on('load', function() {
+      beforeMap.addSource('mapbox-dem', {
+        'type': 'raster-dem',
+        'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        'tileSize': 512,
+        'maxzoom': 14
+      });
+      beforeMap.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 3 });
+    });
+    let afterStyle = {
+      version: 8,
+      sources: {
+        ortho2020: {
+          type: 'raster',
+          tiles: ['https://orthos.its.ny.gov/arcgis/rest/services/wms/2020/MapServer/export?bbox={bbox-epsg-3857}&format=png&transparent=true&f=image'],
+          tileSize: 256,
+          attribution: '<a href="https://orthos.its.ny.gov/arcgis/rest/services/wms/2020_cir/MapServer">NYS ITS GIS Program Office</a>'
+        }
+      },
+      layers: [
+        {
+          id: 'ortho2020',
+          type: 'raster',
+          source: 'ortho2020',
+        }
+      ]
+    };
+    const afterMap = new mapboxgl.Map({
+        container: 'after',
+        style: afterStyle,
+        center: [-73.96332, 40.78585],
+        zoom: 14,
+        bearing: 28.8,
+        hash: true
+    });
+    afterMap.on('load', function() {
+      afterMap.addSource('mapbox-dem', {
+        'type': 'raster-dem',
+        'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        'tileSize': 512,
+        'maxzoom': 14
+      });
+      afterMap.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 3 });
+
+      afterMap.addControl(
+        new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          marker: false,
+          collapsed: true
+        })
+      );
+    });
+    const container = '#comparison-container';
+    const map = new mapboxgl.Compare(beforeMap, afterMap, container, {});
+
+</script>
+
+</body>
+</html>
