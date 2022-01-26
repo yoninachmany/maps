@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Svalbard 1936</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js"></script>
+    <link href="https://api.mapbox.com/mapbox-assembly/v1.3.0/assembly.min.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-assembly/v1.3.0/assembly.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    </style>
+</head>
+<body>
+<style>
+    body {
+        overflow: hidden;
+    }
+     
+    body * {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+     
+    .map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+    }
+</style>
+<div id="comparison-container">
+    <div id="before" class="map"></div>
+    <div id="after" class="map"></div>
+</div>
+<div class="select-container bg-white px12">
+    <select id="select" class="select"></select>
+    <div class="select-arrow"></div>
+</div>
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const beforeMap = new mapboxgl.Map({
+        container: 'before',
+        style: 'mapbox://styles/mapbox/satellite-streets-v11',
+        center: [18.4, 78.75],
+        zoom: 4.29,
+        hash: true
+    });
+    beforeMap.on('load', function() {
+      beforeMap.addSource('ortho1936', {
+        'type': 'raster',
+        'url': 'mapbox://yoninachmany.svalbard-1936-ortho',
+        'tileSize': 256,
+        'attribution': '<a href="https://www.nature.com/articles/s41586-021-04314-4#data-availability">Norwegian Polar Institute</a>'
+      });
+      beforeMap.addLayer({
+        'id': 'ortho1936',
+        'type': 'raster',
+        'source': 'ortho1936'
+      }, beforeMap.getStyle().layers[2].id);
+
+      beforeMap.addSource('mapbox-dem', {
+        'type': 'raster-dem',
+        'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        'tileSize': 512,
+        'maxzoom': 14
+      });
+      beforeMap.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 2 });
+    });
+    const afterMap = new mapboxgl.Map({
+        container: 'after',
+        style: 'mapbox://styles/mapbox/satellite-streets-v11',
+        center: [18.4, 78.75],
+        zoom: 4.29,
+        hash: true
+    });
+    afterMap.on('load', function() {
+      afterMap.addSource('mapbox-dem', {
+        'type': 'raster-dem',
+        'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        'tileSize': 512,
+        'maxzoom': 14
+      });
+      afterMap.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 2 });
+
+      afterMap.addControl(
+        new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          marker: false,
+          collapsed: true
+        })
+      );
+    });
+    const container = '#comparison-container';
+    const map = new mapboxgl.Compare(beforeMap, afterMap, container, {});
+
+    const LOCATIONS = {
+      'Svalbard': {
+        center: [18.4, 78.75],
+        zoom: 4.29,
+        pitch: 0,
+        bearing: 0
+      },
+      'Bloomstrandbreen': {
+        center: [12.1721, 79.0161],
+        zoom: 11.6,
+        pitch: 73,
+        bearing: 0
+      },
+      'Janssonbreen': {
+        center: [14.48228, 77.91103],
+        zoom: 12.44,
+        pitch: 68,
+        bearing: 151.6
+      },
+      'Duckwitzbreen': {
+        center: [20.6157, 78.3302],
+        zoom: 11.67,
+        pitch: 72,
+        bearing: 92.8
+      },
+      'Brøggerbreen': {
+        center: [11.81668, 78.91124],
+        zoom: 12.26,
+        pitch: 59,
+        bearing: -179.2
+      },
+      'Lovénbreen': {
+        center: [12.111, 78.89191],
+        zoom: 11.98,
+        pitch: 65,
+        bearing: -168.8
+      },
+      'Grønfjordbreen': {
+        center: [14.31019, 77.94389],
+        zoom: 12.1,
+        pitch: 67,
+        bearing: -120
+      },
+      'Tungebreen': {
+        center: [14.90971, 77.97509],
+        zoom: 12.3,
+        pitch: 70,
+        bearing: 165.4
+      },
+      'Gløttfjellbreen': {
+        center: [16.4674, 78.1441],
+        zoom: 11.76,
+        pitch: 66,
+        bearing: -155.1
+      },
+      'Pedâsenkobreen': {
+        center: [20.94105, 78.68397],
+        zoom: 12.08,
+        pitch: 71,
+        bearing: 24.8
+      }
+    };
+    Object.keys(LOCATIONS).forEach((e, i) => {
+        $("#select").append(new Option(e, LOCATIONS[e]));
+    });
+    beforeMap.on('load', function() {
+      $("#select").change(function() {
+          const location = $("#select option:selected").text();
+          beforeMap.jumpTo(LOCATIONS[location]);
+      });
+    });
+</script>
+
+</body>
+</html>
