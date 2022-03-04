@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>NYC's surface elevation</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js"></script>
+    <style>
+      body { margin: 0; padding: 0; }
+      #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <!-- Load the `mapbox-gl-geocoder` plugin. -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css" type="text/css">
+
+    <!-- Promise polyfill script is required -->
+    <!-- to use Mapbox GL Geocoder in IE 11. -->
+    <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
+
+    <script>
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ";
+        const tilesetID = "yoninachmany.nyc-hhdsm";
+        let style = {
+            version: 8,
+            sources: {
+                hs: {
+                    type: "raster-dem",
+                    url: `mapbox://${tilesetID}`
+                }
+            },
+            layers: [
+                {
+                    id: "background",
+                    type: "background",
+                    paint: {
+                        "background-color": "light gray"
+                    }
+                },
+                {
+                    id: "hs",
+                    source: "hs",
+                    type: "hillshade",
+                    paint: {
+                        "hillshade-exaggeration": 1
+                    }
+                }
+            ]
+        };
+        const tilesetRegex = new RegExp(`${tilesetID}/[0-9]+\/[0-9]+\/[0-9]+`);
+        const map = new mapboxgl.Map({
+          container: "map",
+          zoom: 9.69,
+          center: [-73.9796, 40.6979],
+          hash: true,
+          style: 'mapbox://styles/mapbox/satellite-streets-v11',
+          transformRequest: (url, type) => {
+            if (type === "Tile" && tilesetRegex.test(url) && !tilesetID.startsWith("mapbox")) {
+              return { url: url.replace("webp", "pngraw") };
+            }
+          }
+        });
+
+        map.on("load", function() {
+          map.addSource("mapbox-dem", {
+            type: "raster-dem",
+            url: `mapbox://${tilesetID}`,
+            tileSize: 512,
+            attribution: '<a href="https://maps.nyc.gov/lidar/2017/">NYC DoITT GIS Unit</a>'
+          });
+          // add the DEM source as a terrain layer with exaggerated height
+          map.setTerrain({ source: "mapbox-dem", exaggeration: 0.3 });
+
+          // add a sky layer that will show when the map is highly pitched
+          map.addLayer({
+            id: "sky",
+            type: "sky",
+            paint: {
+              "sky-type": "atmosphere",
+              "sky-atmosphere-sun": [0.0, 0.0],
+              "sky-atmosphere-sun-intensity": 15
+            }
+          });
+
+          // Add the geocoder control to the map.
+          map.addControl(
+              new MapboxGeocoder({
+                  accessToken: mapboxgl.accessToken,
+                  mapboxgl: mapboxgl,
+                  marker: false,
+                  collapsed: true
+              })
+          );
+        });
+    </script>
+  </body>
+</html>
