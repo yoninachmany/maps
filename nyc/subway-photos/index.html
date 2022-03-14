@@ -1,0 +1,63 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Subway Construction Photos</title>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css' rel='stylesheet' />
+  <style>
+    html, body, #mapContainer {
+      height: 100%;
+      margin: 0;
+    }
+
+    #overlay {
+      font-family: "Adobe Garamond Pro";
+      position: absolute;
+      z-index: 1;
+      top: 10px;
+      left: 10px;
+      background: #ccc;
+      padding: 15px;
+      border-radius: 5px;
+      max-width: 700px;
+      text-align: center;
+    }
+
+    h3 {
+      font-size:  20px;
+      margin-top: 0;
+    }
+
+    p {
+      font-size:  18px;
+    }
+
+    :visited {
+      color: blue;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="overlay">
+    <h3 id="title">
+      SUBWAY CONSTRUCTION PHOTOGRAPH COLLECTION, 1900-1950
+    </h3>
+    <div id="photo">
+      <a href="https://digitalcollections.nyhistory.org/islandora/object/nyhs:78614/" target="_blank">
+        <img src="https://digitalcollections.nyhistory.org/islandora/object/nyhs:78614/datastream/JPG/view" width=700 height=400></div>
+      </a>
+    <p id="description">
+      The 20th century ushered in New York's underground subway system, starting at City Hall. Photographers captured streets (and tunnels) during construction, primarily for insurance. Recently digitized by the <a href="https://digitalcollections.nyhistory.org/islandora/object/nyhs%3Asubway" target="_blank">New-York Historical Society</a>, the archive shows the city of the past. Zoom in to this map of automatically-geotagged photos and hover over points to see the images! Overlapping photos have been spread out in a circle around the original point – if you go around the circle of points, you may find sequences of photos taken every ~50 feet! Many photos have incorrect coordinates, and they are hosted by N-YHS, so be patient if they take a second to load.
+    <p id="about">
+      <i>By <a href="https://twitter.com/yoninachmany" target="_blank">Yoni Nachmany</a>, inspired by Chris Whong's <a href="https://stroll-down-flatbush.chriswhong.com/" target="_blank">"A Stroll Down Flatbush"</a> and <a href="https://github.com/chriswhong/mapboxgl-nyc-subway" target="_blank">subway map</a></i>
+    </p>
+  </div>
+  <div id='mapContainer'></div>
+  <script src='https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js'></script>
+  <script src="js/subway-layer-styles.js"></script>
+  <script src="js/scripts.js"></script>
+</body>
+</html>
