@@ -16,7 +16,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd
 // initialize the mapboxGL map in the div with id 'mapContainer'
 const map = new mapboxgl.Map({
   container: 'mapContainer',
-  style: 'mapbox://styles/yoninachmanymapbox/cksrui6pr2m3h17n0uqje6ta4',
+  style: 'mapbox://styles/yoninachmany/cl0uc2vi8000316ny7lx72pwu',
   center: [-74.2405, 40.708],
   zoom: 10.05,
   hash: true
