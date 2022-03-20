@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Panoramic view of Manhattan, showing Brooklyn Bridge under construction</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.7.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; background-color: black; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: {
+            'version': 8,
+            'sources': {
+                'raster-tiles': {
+                    'type': 'raster',
+                    'tiles': [
+                        'https://raw.githubusercontent.com/nypl-spacetime/panoramic-view-of-manhattan/gh-pages/tiles/{z}/{x}/{y}.png'
+                    ],
+                    'tileSize': 256,
+                    'scheme': 'tms',
+                    'attribution':
+                        'NYPL Digital Collections - <a href="http://digitalcollections.nypl.org/about#use">No known US copyright restrictions; other rights restrictions may apply</a>'
+                }
+            },
+            'layers': [
+                {
+                    'id': 'simple-tiles',
+                    'type': 'raster',
+                    'source': 'raster-tiles'
+                }
+            ]
+        },
+        center: [-80, -83.95],
+        zoom: 4.4,
+        hash: true
+    });
+    map.setRenderWorldCopies(false);
+</script>
+
+</body>
+</html>
