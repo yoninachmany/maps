@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Moon Globe</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://www.unpkg.com/mapbox-gl@2.8.0-alpha.1/dist/mapbox-gl.css" rel="stylesheet">
+<script src="https://www.unpkg.com/mapbox-gl@2.8.0-alpha.1/dist/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55bWFwYm94IiwiYSI6ImNrMTg3dXo4dDAwbHkzYnBob3dtajM4a2kifQ.SNPc6w7pfD_HalkSzRkFKw';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/yoninachmanymapbox/cklzkai5n6sqo17qfvrmupn07',
+        center: [0, 0],
+        zoom: 2.5,
+        projection: 'globe',
+        hash: true
+    });
+</script>
+
+</body>
+</html>
