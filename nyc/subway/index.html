@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <title>Subway Hops</title>
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.js"></script>
   <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
   <style>
     body { margin: 0; padding: 0; }
@@ -19,7 +19,7 @@
 
 <script type="text/javascript">
 
-mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55bWFwYm94IiwiYSI6ImNrMTg3dXo4dDAwbHkzYnBob3dtajM4a2kifQ.SNPc6w7pfD_HalkSzRkFKw';
+mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
 
 const {MapboxLayer, ArcLayer} = deck;
 
@@ -29,6 +29,7 @@ const LINE_COLORS = {
   '4': [0, 147, 60],
   '7': [185, 51, 173],
   'A': [0, 57, 166],
+  'SI': [0, 57, 166],
   'B': [255, 99, 25],
   'G': [108, 190, 69],
   'J': [153, 102, 51],
@@ -38,7 +39,7 @@ const LINE_COLORS = {
 
 const map = new mapboxgl.Map({
   container: 'map',
-  style: 'mapbox://styles/yoninachmanymapbox/cksrui6pr2m3h17n0uqje6ta4',
+  style: 'mapbox://styles/yoninachmany/cl0uc2vi8000316ny7lx72pwu',
   center: [-73.857, 40.7179],
   zoom: 10.19,
   bearing: 29,
@@ -52,7 +53,7 @@ map.on('load', () => {
   const subwayLinesLayer = new deck.MapboxLayer({
     id: 'subway-lines',
     type: ArcLayer,
-    data: './Subway Lines.geojson',
+    data: './nyc-subway-route-lines.geojson',
     dataTransform: d => d.features,
     getSourcePosition: f => f.geometry.coordinates[0],
     getTargetPosition: f => f.geometry.coordinates[f.geometry.coordinates.length-1],
