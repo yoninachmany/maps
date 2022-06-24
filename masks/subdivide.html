@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>(Sub)divide</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<style>
+    .map-overlay {
+        font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        background-color: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        border-radius: 3px;
+        position: absolute;
+        width: 20%;
+        top: 10px;
+        left: 10px;
+        padding: 10px;
+        display: none;
+    }
+</style>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+
+<div id="map"></div>
+<div id="map-overlay" class="map-overlay"></div>
+
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/satellite-v9',
+        center: [12.45208, 41.90413],
+        zoom: 14.41,
+        projection: 'naturalEarth',
+        hash: true
+    });
+
+    map.addControl(
+        new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken,
+            mapboxgl: mapboxgl,
+            collapsed: true,
+            marker: false
+        })
+    );
+
+    const overlay = document.getElementById('map-overlay');
+
+    let hoveredStateId = null;
+
+    map.on('load', () => {
+        // https://docs.mapbox.com/data/tilesets/reference/mapbox-countries-v1/
+        map.addSource('countries', {
+            type: 'vector',
+            url: 'mapbox://mapbox.country-boundaries-v1'
+        });
+
+        // The feature-state dependent fill-opacity expression will render the hover effect
+        // when a feature's hover state is set to true.
+        map.addLayer({
+            'id': 'countries-fill',
+            'type': 'fill',
+            'source': 'countries',
+            'source-layer': 'country_boundaries',
+            'paint': {
+                'fill-color': 'white',
+                'fill-opacity': [
+                    'interpolate',
+                    ['exponential', 0.5],
+                    ['zoom'],
+                    0, ['case', ['boolean', ['feature-state', 'hover'], false], 0, 1],
+                    22, ['case', ['boolean', ['feature-state', 'hover'], false], 0, 1],
+                ]
+            },
+            'filter': [
+                "any",
+                ["==", "all", ["get", "worldview"]],
+                ["in", "US", ["get", "worldview"]]
+            ]
+        });
+
+        // When the user moves their mouse over the state-fill layer, we'll update the
+        // feature state for the feature under the mouse.
+        map.on('mousemove', 'countries-fill', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredStateId !== null) {
+                    map.setFeatureState(
+                    { source: 'countries', 'sourceLayer': 'country_boundaries', id: hoveredStateId },
+                    { hover: false }
+                    );
+                }
+            hoveredStateId = e.features[0].id;
+            map.setFeatureState(
+                { source: 'countries', 'sourceLayer': 'country_boundaries', id: hoveredStateId },
+                { hover: true }
+                );
+            }
+
+            overlay.innerHTML = e.features[0].properties.name_en;
+            overlay.style.display = 'block';
+        });
+             
+        // When the mouse leaves the state-fill layer, update the feature state of the
+        // previously hovered feature.
+        map.on('mouseleave', 'countries-fill', () => {
+            if (hoveredStateId !== null) {
+                map.setFeatureState(
+                    { source: 'countries', 'sourceLayer': 'country_boundaries', id: hoveredStateId },
+                    { hover: false }
+                );
+            }
+            hoveredStateId = null;
+
+            overlay.style.display = 'none';
+        });
+    });
+</script>
+
+</body>
+</html>
