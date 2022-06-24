@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>(Re)tract</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<style>
+    .map-overlay {
+        font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        background-color: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        border-radius: 3px;
+        position: absolute;
+        width: 20%;
+        top: 10px;
+        left: 10px;
+        padding: 10px;
+        display: none;
+    }
+</style>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+
+<div id="map"></div>
+<div id="map-overlay" class="map-overlay"></div>
+
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/satellite-v9',
+        center: [-119.498, 35.956],
+        zoom: 6.61,
+        projection: 'albers',
+        hash: true
+    });
+
+    map.addControl(
+        new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken,
+            mapboxgl: mapboxgl,
+            collapsed: true,
+            marker: false
+        })
+    );
+
+    const overlay = document.getElementById('map-overlay');
+
+    let hoveredStateId = null;
+
+    map.on('load', () => {
+        // Mapbox map using vector tiles: https://uscensusbureau.github.io/citysdk/examples/mapbox-choropleth/
+        map.addSource('tracts', {
+            type: 'vector',
+            tiles: ['https://gis.data.census.gov/arcgis/rest/services/Hosted/VT_2020_140_00_PY_D1/VectorTileServer/tile/{z}/{y}/{x}.pbf'],
+            promoteId: "GEOID" // promote field to be used as a foreign key
+        });
+
+        // The feature-state dependent fill-opacity expression will render the hover effect
+        // when a feature's hover state is set to true.
+        map.addLayer({
+            'id': 'tracts-fill',
+            'type': 'fill',
+            'source': 'tracts',
+            'source-layer': 'CensusTract',
+            'paint': {
+                'fill-color': 'black',
+                'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1, 0],
+                
+            }
+        });
+
+        // When the user moves their mouse over the state-fill layer, we'll update the
+        // feature state for the feature under the mouse.
+        map.on('mousemove', 'tracts-fill', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredStateId !== null) {
+                    map.setFeatureState(
+                    { source: 'tracts', 'sourceLayer': 'CensusTract', id: hoveredStateId },
+                    { hover: false }
+                    );
+                }
+            hoveredStateId = e.features[0].id;
+            map.setFeatureState(
+                { source: 'tracts', 'sourceLayer': 'CensusTract', id: hoveredStateId },
+                { hover: true }
+                );
+            }
+
+            overlay.innerHTML = e.features[0].properties.FULLNAME;
+            overlay.style.display = 'block';
+        });
+             
+        // When the mouse leaves the state-fill layer, update the feature state of the
+        // previously hovered feature.
+        map.on('mouseleave', 'tracts-fill', () => {
+            if (hoveredStateId !== null) {
+                map.setFeatureState(
+                    { source: 'tracts', 'sourceLayer': 'CensusTract', id: hoveredStateId },
+                    { hover: false }
+                );
+            }
+            hoveredStateId = null;
+
+            overlay.style.display = 'none';
+        });
+    });
+</script>
+
+</body>
+</html>
