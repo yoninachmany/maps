@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Mapbox Satellite View</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+<script src='https://unpkg.com/@turf/turf@latest/turf.min.js'></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+#mapInset {
+    bottom: 0px;
+    right: 0px;
+    height: 200px;
+    width: 200px;
+    max-width: 100%;
+    position: fixed;
+    z-index: 1;
+    opacity: 0.8;
+    pointer-events: none;
+}
+#mapInset .mapboxgl-ctrl-logo {
+    display: none !important;
+}
+#names {
+    bottom: 75px;
+    right: 225px;
+    height: 200;
+    width: 200;
+    max-width: 100%;
+    position: fixed;
+    z-index: 1;
+    font: 'Google Sans',Roboto,sans-serif;
+    color: #ffffff;
+}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<h3 id="names"></h3>
+<div id="mapInset"></div>
+<script>
+    var land;
+    fetch('./ne_50m_land.geojson')
+      .then(res => res.json())
+      .then(data => land = data)
+      .then(() => {
+        const coordinates = land.features.map((feature) => feature.geometry.coordinates);
+        const multiPolygon = turf.multiPolygon(coordinates);
+        const bbox = [-180,-50,180,50]
+        var randomPointGeom = turf.randomPoint(1, {"bbox": bbox}).features[0].geometry;
+        while (!turf.booleanPointInPolygon(randomPointGeom, multiPolygon)) {
+            randomPointGeom = turf.randomPoint(1, {"bbox": bbox}).features[0].geometry;
+        }
+
+        const center = randomPointGeom.coordinates;
+        const pitch = 85 * Math.random();
+        const bearing = 360 * Math.random() - 180;
+        const zoom = 10 * Math.random() + 6;
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/satellite-v9',
+            center: center,
+            pitch: pitch,
+            zoom: zoom,
+            interactive: false,
+            logoPosition: 'top-left',
+            attributionControl: false
+        });
+        map.addControl(new mapboxgl.AttributionControl(), 'bottom-left');
+
+        map.on('load', () => {
+            map.addSource('mapbox-dem', {
+                'type': 'raster-dem',
+                'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                'tileSize': 512,
+                'maxzoom': 14
+            });
+            map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 3 });
+            map.setFog({});
+        });
+
+        const insetMap = new mapboxgl.Map({
+            container: 'mapInset',
+            style: 'mapbox://styles/mapbox/dark-v10',
+            center: [0, 0],
+            zoom: 0.1,
+            interactive: false,
+            attributionControl: false,
+            projection: 'globe'
+        });
+        insetMap.on('load', () => {
+            insetMap.addSource('land', {
+                type: 'geojson',
+                data: land
+            });
+            insetMap.addLayer({
+                'id': 'land-fill',
+                'type': 'fill',
+                'source': 'land',
+                'paint': {
+                    'fill-color': 'white'
+                }
+            });
+
+            insetMap.flyTo({
+                center: center,
+                duration: 500,
+                easing(t) {
+                    return t < 0.5
+                        ? (1 - Math.sqrt(1 - Math.pow(2 * t, 2))) / 2
+                        : (Math.sqrt(1 - Math.pow(-2 * t + 2, 2)) + 1) / 2;
+                }
+            });
+            insetMap.on('moveend', () => {
+                const marker = new mapboxgl.Marker({ color: 'red', scale: 0.75 });
+                marker.setLngLat(center).addTo(insetMap);
+            });
+        });
+
+        fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${center[0]},${center[1]}.json?access_token=${mapboxgl.accessToken}&types=country,place`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.features.length == 2) {
+                const placeName = data.features[0].text;
+                const countryName = data.features[1].text;
+                document.getElementById("names").innerHTML = `${placeName},<br>${countryName}`;
+            }
+            else {
+                const countryName = data.features[0].text;
+                document.getElementById("names").innerHTML = countryName;
+            }
+        });
+      });
+</script>
+
+</body>
+</html>
