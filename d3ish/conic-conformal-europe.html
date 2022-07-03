@@ -1,0 +1,36 @@
+<!-- https://observablehq.com/@d3/conic-conformal?collection=@d3/d3-geo -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Conic Conformal</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<script src="./d3-style.js"></script>
+<div id="map"></div>
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: style,
+        center: [20.42, 52.47],
+        zoom: 2.86,
+        projection: {
+            name: 'lambertConformalConic',
+            center: [0, 52],
+            parallels: [35, 65]
+        },
+        bearing: -15,
+        hash: true
+    });
+</script>
+
+</body>
+</html>
