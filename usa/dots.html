@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>USA Dot Density</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'>
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet'>
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js'></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<style>
+  .legend {
+    background-color: #fff;
+    border-radius: 3px;
+    bottom: 30px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    padding: 10px;
+    position: absolute;
+    right: 10px;
+    z-index: 1;
+  }
+   
+  .legend h4 {
+    margin: 0 0 10px;
+  }
+   
+  .legend div span {
+    border-radius: 50%;
+    display: inline-block;
+    height: 10px;
+    margin-right: 5px;
+    width: 10px;
+  }
+</style>
+
+<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js'></script>
+<link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css' type='text/css'>
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+<script src='https://unpkg.com/deck.gl@latest/dist.min.js'></script>
+
+<div id='map'></div>
+
+<!-- Legend from https://docs.mapbox.com/mapbox-gl-js/example/updating-choropleth/ -->
+<div id='legend' class='legend'>
+  <h4>Race/Ethnicity by Zip Code</h4>
+  <div><span style='background-color: rgb(0,0,0)'></span>= 100 people</div>
+  <div><span style='background-color: rgb(251,54,64)'></span>White</div>
+  <div><span style='background-color: rgb(56,153,201)'></span>Black</div>
+  <div><span style='background-color: rgb(232,128,12)'></span>Native American</div>
+  <div><span style='background-color: rgb(137,255,167)'></span>Asian/Pacific Islander</div>
+  <div><span style='background-color: rgb(167,153,183)'></span>Multiracial/Other</div>
+  <div><span style='background-color: rgb(255,240,124)'></span>Hispanic</div>
+</div>
+
+<script>
+  const { MapboxLayer, ScatterplotLayer } = deck;
+
+  mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v9', // WaPo is dark style, CNN is light style
+    center: [-98.585522, 39.8333333],
+    zoom: 3.5,
+    projection: 'mercator', // 'albers' is not supported by deck.gl
+    hash: true
+  });
+
+  // WaPo article: https://www.washingtonpost.com/graphics/2018/national/segregation-us-cities/
+  // CNN article: https://www.cnn.com/interactive/2021/us/census-race-ethnicity-map/
+  // Variables: https://api.census.gov/data/2020/acs/acs5/variables.html
+  // Colors: https://observablehq.com/@aboutaaron/racial-demographic-dot-density-map#colorScheme
+  const raceEthnicityMap = {
+    'B02001_002E': {'name': 'White', 'color': [251,54,64]},
+    'B02001_003E': {'name': 'Black', 'color': [56,153,201]},
+    'B02001_004E': {'name': 'Native American', 'color': [232,128,12]},
+    'B02001_005E': {'name': 'Asian', 'color': [137,255,167]},
+    'B02001_006E': {'name': 'Pacific Islander', 'color': [137,255,167]},
+    'B02001_007E': {'name': 'Other', 'color': [167,153,183]},
+    'B02001_008E': {'name': 'Multiracial', 'color': [167,153,183]},
+    'B03001_003E': {'name': 'Hispanic', 'color': [255,240,124]}
+  };
+  // WaPo Observable defaults to 10 points, goes to 100
+  // CNN uses either 150, 300, and 900 points
+  const peoplePerPoint = 100;
+  // Generate twice as many random points as needed, in case
+  const randomPointMultiple = 2;
+
+  function generateRandomPoints(feature) {
+    var randomPoints = [];
+
+    const polygon = feature.geometry;
+    const bbox = turf.bbox(polygon);
+
+    for (const [variable, value] of Object.entries(raceEthnicityMap)) {
+      const count = feature.properties[variable];
+      const name = value['name'];
+      const color = value['color'];
+
+      const scaledCount = count / peoplePerPoint;
+      if (!scaledCount) continue;
+      
+      // One call to randomPoint, generate twice as many points as needed
+      const numberRandomPoints = scaledCount * randomPointMultiple;
+      var possibleRandomPoints = turf.randomPoint(numberRandomPoints, {bbox: bbox}).features;
+      
+      var hits = 0;
+      var index = 0;
+      while (hits < scaledCount) {
+        const randomPoint = possibleRandomPoints[index];
+        if (turf.booleanPointInPolygon(randomPoint, polygon)) {
+          randomPoint.properties = {'name': name, 'color': color};
+          randomPoints.push(randomPoint);
+          hits++;
+        }
+
+        // Regenerate random points if needed
+        index++;
+        if (index == possibleRandomPoints.length) {
+          possibleRandomPoints = turf.randomPoint(numberRandomPoints, {bbox: bbox}).features;
+          index = 0;
+        }
+      }
+    }
+
+    return randomPoints;
+  }
+
+  map.on('load', () => {
+    // Add a geocoder: https://docs.mapbox.com/mapbox-gl-js/example/mapbox-gl-geocoder/
+    const geocoder = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      mapboxgl: mapboxgl,
+      collapsed: true,
+      marker: false
+    });
+    map.addControl(geocoder);
+
+    // Add a new layer below labels: https://docs.mapbox.com/mapbox-gl-js/example/geojson-layer-in-stack/
+    const layers = map.getStyle().layers;
+    var firstSymbolId;
+    for (const layer of layers) {
+      if (layer.type === 'symbol') {
+        firstSymbolId = layer.id;
+        break;
+      }
+    }
+
+    // Set label symbols to white text color
+    for (const layer of layers) {
+      if (layer.type == 'symbol') {
+        map.setPaintProperty(layer.id, 'text-color', 'white');
+      }
+    }
+
+    // Census hosted vector tiles: https://uscensusbureau.github.io/citysdk/examples/mapbox-choropleth/
+    map.addSource('zctas', {
+        type: 'vector',
+        tiles: ['https://gis.data.census.gov/arcgis/rest/services/Hosted/VT_2020_860_00_PY_D1/VectorTileServer/tile/{z}/{y}/{x}.pbf'],
+        promoteId: 'GEOID', // promote field to be used as a foreign key
+        attribution: '<a href="https://uscensusbureau.github.io/citysdk/" target="_blank">U.S. Census Bureau</a>'
+    });
+
+    map.addLayer({
+      'id': 'zctas-line',
+      'type': 'line',
+      'source': 'zctas',
+      'source-layer': 'ZCTA5',
+      'paint': {
+          'line-color': 'gray',
+          'line-opacity': 0.5
+      }
+    }, firstSymbolId);
+
+    // GeoJSON Merged with Statistics: https://uscensusbureau.github.io/citysdk/docs/#geojson-merged-with-statistics
+    // 
+    // node --max-old-space-size=8192
+    // const census = require('citysdk')
+    // census({
+    //   'vintage': 2020,
+    //   'geoHierarchy': {'zip code tabulation area': '*'},
+    //   'geoResolution': '500k',
+    //   'values': ['B02001_002E', 'B02001_003E', 'B02001_004E', 'B02001_005E', 'B02001_006E', 'B02001_007E', 'B02001_008E', 'B03001_003E'],
+    //   'sourcePath': ['acs', 'acs5']
+    // }, (err, data) => {
+    //   fs.writeFileSync('./zctas2020.json', JSON.stringify(data))
+    // })
+    var zctas;
+    fetch('./zctas2020.json')
+      .then(res => res.json())
+      .then(json => zctas = json)
+      .then(() => {
+        const features = zctas.features.map(feature => generateRandomPoints(feature)).flat();
+        console.log(features.length);
+        const step = 1000000;
+        for (var start = 0; start < features.length; start += step) {
+          map.addLayer(new MapboxLayer({
+            id: `dots-${start}`,
+            type: ScatterplotLayer,
+            data: features.slice(start, start+step),
+            opacity: 0.4,
+            radiusScale: 30,
+            radiusMinPixels: 0.5,
+            radiusMaxPixels: 15,
+            getPosition: d => d.geometry.coordinates,
+            getFillColor: d => d.properties.color
+          }), firstSymbolId);
+        }
+    });
+  });
+</script>
+
+</body>
+</html>
