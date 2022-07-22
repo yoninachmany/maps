@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>Street Trees NYC</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'>
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css' rel='stylesheet'>
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js'></script>
+<script src='https://unpkg.com/deck.gl@latest/dist.min.js'></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<style>
+    .toggle {
+        font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        font-weight: 600;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1;
+        border-radius: 3px;
+        max-width: 20%;
+        color: #fff;
+    }
+
+    .toggle input[type='checkbox'] {
+        display: none;
+    }
+
+    .toggle input[type='checkbox'] + label {
+        background-color: #3386c0;
+        display: block;
+        cursor: pointer;
+        padding: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+    }
+</style>
+<div id='map'></div>
+<nav id='toggle' class='toggle'>
+    <input type='checkbox' id='dimension' checked='checked'>
+    <label for='dimension'>3D</label>
+</nav>
+<script src='./basemap-style.js'></script>
+<script>
+    const { MapboxLayer, PointCloudLayer } = deck;
+
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: style,
+        center: [-73.967, 40.7765],
+        zoom: 14,
+        bearing: 48,
+        pitch: 60,
+        hash: true
+    });
+    map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}), 'top-left');
+
+    map.on('load', () => {
+        map.setFog({
+            'range': [0.5, 10],
+            'horizon-blend': 0.1,
+            'color': 'white',
+            'high-color': '#add8e6',
+            'space-color': '#d8f2ff',
+            'star-intensity': 0.0
+        });
+
+        var geojson;
+        fetch('./street_trees.geojson')
+        .then(res => res.json())
+        .then(json => geojson = json)
+        .then(() => {
+            const altitude = 20;
+            const features = geojson.features;
+            console.log(features.length);
+            const data = features.map(({ properties, geometry }) => ({
+                'position': geometry.coordinates.concat(altitude),
+                'color': [
+                    parseInt(properties.c[1] + properties.c[2], 16),
+                    parseInt(properties.c[3] + properties.c[4], 16),
+                    parseInt(properties.c[5] + properties.c[6], 16)
+                ],
+            }));
+
+            const pointCloudLayer = new MapboxLayer({
+                id: 'street-trees-3d',
+                type: PointCloudLayer,
+                data: data,
+                getColor: d => d.color,
+                sizeUnits: 'meters',
+                pointSize: 4,
+                material: false,
+                opacity: 0.75
+            });
+            map.addLayer(pointCloudLayer, 'street-trees');
+            map.setLayoutProperty('street-trees-3d', 'visibility', 'none');
+        })
+
+        document.getElementById('toggle').addEventListener('change', (e) => {
+            const handler = e.target.id;
+            if (e.target.checked) {
+                map.setLayoutProperty('street-trees', 'visibility', 'visible');
+                map.setLayoutProperty('street-trees-3d', 'visibility', 'none');
+                map.easeTo({'pitch': 60});
+                e.target.labels[0].innerText = '3D';
+            } else {
+                map.setLayoutProperty('street-trees', 'visibility', 'none');
+                map.setLayoutProperty('street-trees-3d', 'visibility', 'visible');
+                map.easeTo({'pitch': 80});
+                e.target.labels[0].innerText = '2D';
+            }
+        });
+    });
+
+</script>
+
+</body>
+</html>
