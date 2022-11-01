@@ -57,7 +57,7 @@ body { margin: 0; padding: 0; }
             // Populate the popup and set its coordinates
             // based on the feature found.
             rand = Math.random();
-            html = `<h3 style="text-align: center;">${content}</h3><img width="352" height="240" src="https://jpg.nyctmc.org/${id}?rand=${rand}.jpg">`;
+            html = `<h3 style="text-align: center;">${content}</h3><img width="440" height="300" src="https://jpg.nyctmc.org/${id}?rand=${rand}.jpg">`;
             popup.setLngLat(coordinates).setHTML(html).addTo(map);
         });
              
@@ -69,7 +69,7 @@ body { margin: 0; padding: 0; }
         window.setInterval(function() {
             if (html) {
                 rand = Math.random();
-                html = `<h3 style="text-align: center;">${content}</h3><img width="352" height="240" src="https://jpg.nyctmc.org/${id}?rand=${rand}.jpg">`;
+                html = `<h3 style="text-align: center;">${content}</h3><img width="440" height="300" src="https://jpg.nyctmc.org/${id}?rand=${rand}.jpg">`;
                 popup.setLngLat(coordinates).setHTML(html).addTo(map);
             }
         }, 3000);
