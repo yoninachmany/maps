@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NYC Real Time Traffic Cameras</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<!-- Load the `mapbox-gl-geocoder` plugin. -->
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+
+<div id="map"></div>
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    (async () => {
+        const map = new mapboxgl.Map({
+            container: 'map',
+            zoom: 9.35,
+            center: [-73.9721, 40.7028],
+            style: 'mapbox://styles/yoninachmany/cl9y8lp8000cy15kha16ri4j4',
+            hash: true
+        });
+
+        await map.once('load');
+
+        // Create a popup, but don't add it to the map yet.
+        const popup = new mapboxgl.Popup({
+            anchor: 'bottom',
+            closeButton: false,
+            closeOnClick: false,
+            maxWidth: 400
+        });
+        var coordinates, content, id, html, rand;
+        
+        map.on('mouseenter', 'symbols', (e) => {
+            // Change the cursor style as a UI indicator.
+            map.getCanvas().style.cursor = 'pointer';
+             
+            // Copy coordinates array.
+            coordinates = e.features[0].geometry.coordinates.slice();
+            content = e.features[0].properties.content;
+            id = e.features[0].properties.id;
+             
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+            }
+             
+            // Populate the popup and set its coordinates
+            // based on the feature found.
+            rand = Math.random();
+            html = `<h3 style="text-align: center;">${content}</h3><img width="352" height="240" src="https://jpg.nyctmc.org/${id}?rand=${rand}.jpg">`;
+            popup.setLngLat(coordinates).setHTML(html).addTo(map);
+        });
+             
+        map.on('mouseleave', 'symbols', () => {
+            map.getCanvas().style.cursor = '';
+            popup.remove();
+        });
+
+        window.setInterval(function() {
+            if (html) {
+                rand = Math.random();
+                html = `<h3 style="text-align: center;">${content}</h3><img width="352" height="240" src="https://jpg.nyctmc.org/${id}?rand=${rand}.jpg">`;
+                popup.setLngLat(coordinates).setHTML(html).addTo(map);
+            }
+        }, 3000);
+
+        map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
+
+    })();
+</script>
+
+</body>
+</html>
