@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NYC Local Law Street Names</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/satellite-v9',
+        zoom: 9.35,
+        center: [-73.9721, 40.7028],
+        hash: true
+    });
+
+    map.on('load', () => {
+        map.setPaintProperty('satellite', 'raster-saturation', {
+            'stops': [
+                [
+                    10,
+                    0
+                ],
+                [
+                    16,
+                    -1
+                ]
+            ]
+        });
+
+        map.addSource('citymap', {
+            'type': 'vector',
+            'tiles': [
+                'https://planninglabs.carto.com/api/v1/map/9dd407f7245716807305c785c46d1eaf:1666848194904/28/{z}/{x}/{y}.mvt'
+            ],
+            'attribution': '<a href="https://streets.planning.nyc.gov/" target="_blank">NYC Planning Labs</a>',
+        });
+
+        map.addLayer(
+            {
+                'id': 'citymap-name-changes-lines',
+                'type': 'line',
+                'source': 'citymap',
+                'source-layer': 'name-changes-lines',
+                'layout': {
+                    'line-cap': 'round',
+                    'line-join': 'round'
+                },
+                'paint': {
+                    'line-opacity': {
+                        'stops': [
+                            [
+                                10,
+                                1
+                            ],
+                            [
+                                22,
+                                0.6
+                            ]
+                        ]
+                    },
+                    'line-color': 'rgb(0, 132, 80)',
+                    'line-width': {
+                        'stops': [
+                            [
+                                10,
+                                1
+                            ],
+                            [
+                                22,
+                                30
+                            ]
+                        ]
+                    }
+                }
+            }
+        );
+        map.addLayer(
+            {
+                'id': 'citymap-name-changes-labels',
+                'type': 'symbol',
+                'source': 'citymap',
+                'source-layer': 'name-changes-lines',
+                'layout': {
+                    'symbol-placement': 'line-center',
+                    'text-field': ['concat', ['get', 'honor_name'], ' (since ', ['get', 'intro_year'], ')'],
+                    'text-font': ['Overpass Black'],
+                    'text-letter-spacing': 0.1
+                },
+                'paint': {
+                    'text-color': 'white'
+                }
+            }
+        );
+    });
+
+    map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
+</script>
+
+</body>
+</html>
