@@ -18,7 +18,7 @@ body { margin: 0; padding: 0; }
 	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
     const map = new mapboxgl.Map({
         container: 'map',
-        style: 'mapbox://styles/mapbox/dark-v9',
+        style: 'mapbox://styles/mapbox/empty-v9',
         zoom: 14.5,
         center: [-73.9592, 40.78724],
         pitch: 38,
@@ -55,7 +55,7 @@ body { margin: 0; padding: 0; }
         map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
 
         map.setFog({
-            "range": [-1, 10],
+            "range": [-1, 15],
             "color": "hsl(0, 0%, 0%)",
             "high-color": "hsl(0, 0%, 0%)",
             "space-color": "hsl(0, 0%, 0%)",
@@ -63,18 +63,10 @@ body { margin: 0; padding: 0; }
             "star-intensity": 0
         });
 
-        const layers = map.getStyle().layers;
-        let firstSymbolId;
-        for (const layer of layers) {
-            if (layer.type === 'symbol') {
-                firstSymbolId = layer.id;
-                break;
-            }
-        }
         map.addSource('contours', {
             type: 'vector',
             url: 'mapbox://yoninachmany.nyc-2ft-contours',
-            minzoom: 10,
+            // minzoom: 10,
             maxzoom: 14,
             attribution: '<a target="_blank" href="https://data.cityofnewyork.us/City-Government/Contours/3cdm-p29e">Office of Technology and Innovation (OTI)</a>'
         });
@@ -91,7 +83,7 @@ body { margin: 0; padding: 0; }
             'paint': {
                 'line-color': layerColor
             }
-        }, firstSymbolId);
+        });
 
         map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
     });
