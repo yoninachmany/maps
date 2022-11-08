@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NYC 2-ft contours</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/dark-v9',
+        zoom: 14.5,
+        center: [-73.9592, 40.78724],
+        pitch: 38,
+        hash: true
+    });
+
+    // https://github.com/mapbox/mbview/blob/master/views/vector.ejs#L75-L92
+    var lightColors = [
+      'FC49A3', // pink
+      'CC66FF', // purple-ish
+      '66CCFF', // sky blue
+      '66FFCC', // teal
+      '00FF00', // lime green
+      'FFCC66', // light orange
+      'FF6666', // salmon
+      'FF0000', // red
+      'FF8000', // orange
+      'FFFF66', // yellow
+      '00FFFF'  // turquoise
+    ];
+    function randomColor(colors) {
+      var randomNumber = parseInt(Math.random() * colors.length);
+      return colors[randomNumber];
+    }
+    var layerColor = '#' + randomColor(lightColors);
+
+    map.on('load', () => {
+        map.addSource('mapbox-dem', {
+            'type': 'raster-dem',
+            'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+            'tileSize': 512,
+            'maxzoom': 14
+        });
+        map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+
+        map.setFog({
+            "range": [-1, 10],
+            "color": "hsl(0, 0%, 0%)",
+            "high-color": "hsl(0, 0%, 0%)",
+            "space-color": "hsl(0, 0%, 0%)",
+            "horizon-blend": 0.1,
+            "star-intensity": 0
+        });
+
+        const layers = map.getStyle().layers;
+        let firstSymbolId;
+        for (const layer of layers) {
+            if (layer.type === 'symbol') {
+                firstSymbolId = layer.id;
+                break;
+            }
+        }
+        map.addSource('contours', {
+            type: 'vector',
+            url: 'mapbox://yoninachmany.nyc-2ft-contours',
+            minzoom: 10,
+            maxzoom: 14,
+            attribution: '<a target="_blank" href="https://data.cityofnewyork.us/City-Government/Contours/3cdm-p29e">Office of Technology and Innovation (OTI)</a>'
+        });
+
+        map.addLayer({
+            'id': 'contours',
+            'type': 'line',
+            'source': 'contours',
+            'source-layer': 'New_York_City_Contours',
+            'layout': {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            'paint': {
+                'line-color': layerColor
+            }
+        }, firstSymbolId);
+
+        map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
+    });
+</script>
+
+</body>
+</html>
