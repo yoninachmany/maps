@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>NYC Street Trees</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'>
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css' rel='stylesheet'>
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js'></script>
+<script src='https://unpkg.com/deck.gl@latest/dist.min.js'></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id='map'></div>
+<script src='./basemap-style.js'></script>
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: style,
+        center: [-73.92125, 40.68389],
+        zoom: 12,
+        bearing: 39.2,
+        pitch: 60,
+        minZoom: 9,
+        maxBounds: [[-74.52515, 40.32527], [-73.48007, 41.15351]],
+        hash: true
+    });
+
+    map.on('load', () => {
+        map.setFog({
+            'range': [1, 10],
+            'horizon-blend': 0.3,
+            'color': 'white',
+            'high-color': '#add8e6',
+            'space-color': '#d8f2ff',
+            'star-intensity': 0.0
+        });
+    });
+
+    map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
+</script>
+</body>
+</html>
