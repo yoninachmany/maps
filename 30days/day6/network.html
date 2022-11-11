@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Subway Hops</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet" />
+<script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+<body>
+<div id="map"></div>
+</body>
+<script>
+  const {MapboxLayer, ArcLayer} = deck;
+
+  mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/yoninachmany/cl0uc2vi8000316ny7lx72pwu',
+    center: [-73.857, 40.7179],
+    zoom: 10.19,
+    bearing: 29,
+    antialias: true,
+    hash: true,
+    customAttribution: '<a href="https://data.cityofnewyork.us/Transportation/Subway-Lines/3qz8-muuu" target="_blank">NYC Open Data</a>'
+  });
+  map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
+
+  // http://web.mta.info/developers/resources/line_colors.htm
+  const LINE_COLORS = {
+    '1': [238, 53, 46],
+    '4': [0, 147, 60],
+    '7': [185, 51, 173],
+    'A': [0, 57, 166],
+    'SI': [0, 57, 166],
+    'B': [255, 99, 25],
+    'G': [108, 190, 69],
+    'J': [153, 102, 51],
+    'L': [167, 169, 172],
+    'N': [252, 204, 10],
+  };
+
+  map.on('load', () => {
+    map.setFog({
+      "range": [2, 20],
+      "color": "hsl(0, 0%, 100%)",
+      "high-color": "hsl(210, 100%, 80%)",
+      "space-color": [
+          "interpolate",
+          ["exponential", 1.2],
+          ["zoom"],
+          5,
+          "hsl(210, 40%, 30%)",
+          7,
+          "hsl(210, 100%, 80%)"
+      ],
+      "horizon-blend": [
+          "interpolate",
+          ["exponential", 1.2],
+          ["zoom"],
+          5,
+          0.02,
+          7,
+          0.08
+      ],
+      "star-intensity": [
+          "interpolate",
+          ["exponential", 1.2],
+          ["zoom"],
+          5,
+          0.1,
+          7,
+          0
+      ]
+    });
+    const subwayLinesLayer = new deck.MapboxLayer({
+      id: 'subway-lines',
+      type: ArcLayer,
+      data: './nyc-subway-route-lines.geojson',
+      dataTransform: d => d.features,
+      getSourcePosition: f => f.geometry.coordinates[0],
+      getTargetPosition: f => f.geometry.coordinates[f.geometry.coordinates.length-1],
+      getSourceColor: f => LINE_COLORS[f.properties.rt_symbol],
+      getTargetColor: f => LINE_COLORS[f.properties.rt_symbol],
+      getWidth: f => f.properties.name.split('-').length
+    });
+
+    map.addLayer(subwayLinesLayer);
+
+  });
+</script>
+</html>
