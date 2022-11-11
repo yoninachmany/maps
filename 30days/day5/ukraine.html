@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>Ukrainian Americans</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'>
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css' rel='stylesheet'>
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js'></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+<script src='https://unpkg.com/deck.gl@latest/dist.min.js'></script>
+<div id='map'></div>
+<script>
+  const { MapboxLayer, ScatterplotLayer } = deck;
+
+  mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/yoninachmany/clabzsok4002t15p3zd62fmn0',
+    center: [-98.585522, 39.8333333],
+    zoom: 3.5,
+    pitch: 1,
+    projection: 'mercator',
+    hash: true
+  });
+  map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
+
+  const peoplePerPoint = 10;
+  // Generate twice as many random points as needed, in case
+  const randomPointMultiple = 2;
+
+  function generateRandomPoints(feature) {
+    var randomPoints = [];
+
+    const polygon = feature.geometry;
+    const bbox = turf.bbox(polygon);
+
+    const count = feature.properties['B04006_092E'];
+    const scaledCount = count / peoplePerPoint;
+    if (!scaledCount) return [];
+      
+    // One call to randomPoint, generate twice as many points as needed
+    const numberRandomPoints = scaledCount * randomPointMultiple;
+    var possibleRandomPoints = turf.randomPoint(numberRandomPoints, {bbox: bbox}).features;
+      
+    var hits = 0;
+    var index = 0;
+    while (hits < scaledCount) {
+      const randomPoint = possibleRandomPoints[index];
+      if (turf.booleanPointInPolygon(randomPoint, polygon)) {
+        randomPoints.push(randomPoint);
+        hits++;
+      }
+
+      // Regenerate random points if needed
+      index++;
+      if (index == possibleRandomPoints.length) {
+        possibleRandomPoints = turf.randomPoint(numberRandomPoints, {bbox: bbox}).features;
+        index = 0;
+      }
+    }
+
+    return randomPoints;
+  }
+
+  map.on('load', () => {
+    // Add a new layer below labels: https://docs.mapbox.com/mapbox-gl-js/example/geojson-layer-in-stack/
+    const layers = map.getStyle().layers;
+    var firstSymbolId;
+    for (const layer of layers) {
+      if (layer.type === 'symbol') {
+        firstSymbolId = layer.id;
+        break;
+      }
+    }
+
+    // Set label symbols to yellow text color
+    for (const layer of layers) {
+      if (layer.type == 'symbol') {
+        map.setPaintProperty(layer.id, 'text-color', 'yellow');
+      }
+    }
+
+    // GeoJSON Merged with Statistics: https://uscensusbureau.github.io/citysdk/docs/#geojson-merged-with-statistics
+    // 
+    // node --max-old-space-size=8192
+    // const census = require('citysdk')
+    // census({
+    //   'vintage': 2020,
+    //   'geoHierarchy': {'zip code tabulation area': '*'},
+    //   'geoResolution': '500k',
+    //   'values': ['NAME', 'B04006_092E'],
+    //   'sourcePath': ['acs', 'acs5'],      
+    // }, (err, data) => {
+    //   fs.writeFileSync('./zctas2020.json', JSON.stringify(data))
+    // })
+    var zctas;
+    fetch('./zctas.geojson')
+      .then(res => res.json())
+      .then(json => zctas = json)
+      .then(() => {
+        const features = zctas.features.map(feature => generateRandomPoints(feature)).flat();
+        console.log(features.length);
+        map.addLayer(new MapboxLayer({
+          id: 'dots',
+          type: ScatterplotLayer,
+          data: features,
+          opacity: 0.5,
+          radiusScale: 30,
+          radiusMinPixels: 0.5,
+          radiusMaxPixels: 15,
+          getPosition: d => d.geometry.coordinates,
+          getFillColor: [255, 240, 124],
+          billboard: true,          
+        }), firstSymbolId);
+      });
+    });
+</script>
+
+</body>
+</html>
