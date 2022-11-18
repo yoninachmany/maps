@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Black/Blue Marble</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 50% }
+#map2 { position: absolute; top: 0; bottom: 0; width: 50%; left: 50% }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="map2"></div>
+
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/satellite-streets-v11',
+        zoom: 2,
+        center: [38.05, 25.93],
+        projection: 'globe',
+        hash: true,
+        logoPosition: 'top-left',
+        attributionControl: false
+    });
+    map.addControl(new mapboxgl.AttributionControl(), 'bottom-left');
+
+    map.on('load', () => {
+        map.setFog({
+            "range": [1, 10],
+            "color": "hsl(240, 12%, 70%)",
+            "high-color": "hsl(240, 12%, 7%)",
+            "space-color": "hsl(240, 12%, 9%)",
+            "horizon-blend": 0.008,
+            "star-intensity": 0.1,
+        });
+        map.addSource('black-marble', {
+            'type': 'raster',
+            'tiles': [
+                'https://tiles.maps.eox.at/wmts/1.0.0/blackmarble_3857/default/g/{z}/{y}/{x}.jpg',
+            ],
+            'tileSize': 256,
+            'attribution': 'Black Marble { <a href="https://www.nasa.gov/">NASA</a> }'
+        });
+        map.addLayer({
+            'id': 'black-marble',
+            'type': 'raster',
+            'source': 'black-marble',
+            'minzoom': 0,
+            'maxzoom': 22
+        }, map.getStyle().layers[1].id);
+        map.removeLayer('satellite');
+        map.removeSource('mapbox://mapbox.satellite');
+    });
+
+    const map2 = new mapboxgl.Map({
+        container: 'map2',
+        style: 'mapbox://styles/mapbox/satellite-streets-v11',
+        zoom: 2,
+        center: [38.05, 25.93],
+        projection: 'globe',
+        hash: true,
+        logoPosition: 'top-right'
+    });
+
+    map2.on('load', () => {
+        map2.setFog({
+            "range": [1, 10],
+            "color": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                "hsl(240, 12%, 70%)",
+                6,
+                "hsl(0, 0%, 100%)"
+            ],
+            "high-color": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                "hsl(240, 12%, 7%)",
+                6,
+                "hsl(38, 63%, 84%)"
+            ],
+            "space-color": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                "hsl(240, 12%, 9%)",
+                6,
+                "hsl(199, 61%, 80%)"
+            ],
+            "horizon-blend": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                0.008,
+                6,
+                0.15
+            ],
+            "star-intensity": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                0.1,
+                6,
+                0
+            ]
+        });
+        map2.addSource('blue-marble', {
+            'type': 'raster',
+            'tiles': [
+                'https://tiles.maps.eox.at/wmts/1.0.0/bluemarble_3857/default/g/{z}/{y}/{x}.jpg',
+            ],
+            'tileSize': 256,
+            'attribution': 'Blue Marble { <a href="https://www.nasa.gov/">NASA</a> }'
+        });
+        map2.addLayer({
+            'id': 'blue-marble',
+            'type': 'raster',
+            'source': 'blue-marble',
+            'minzoom': 0,
+            'maxzoom': 22
+        }, map2.getStyle().layers[1].id);
+        map2.removeLayer('satellite');
+        map2.removeSource('mapbox://mapbox.satellite');
+    });
+
+    // https://github.com/mapbox/mapbox-gl-sync-move/blob/main/index.js
+    function moveToMapPosition (master, clones) {
+      var center = master.getCenter();
+      var zoom = master.getZoom();
+      var bearing = master.getBearing();
+      var pitch = master.getPitch();
+
+      clones.forEach(function (clone) {
+        clone.jumpTo({
+          center: center,
+          zoom: zoom,
+          bearing: bearing,
+          pitch: pitch
+        });
+      });
+    }
+
+    // Sync movements of two maps.
+    //
+    // All interactions that result in movement end up firing
+    // a "move" event. The trick here, though, is to
+    // ensure that movements don't cycle from one map
+    // to the other and back again, because such a cycle
+    // - could cause an infinite loop
+    // - prematurely halts prolonged movements like
+    //   double-click zooming, box-zooming, and flying
+    function syncMaps (maps) {
+      // Create all the movement functions, because if they're created every time
+      // they wouldn't be the same and couldn't be removed.
+      var fns = [];
+      maps.forEach(function (map, index) {
+        fns[index] = sync.bind(null, map, maps.filter(function (o, i) { return i !== index; }));
+      });
+
+      function on () {
+        maps.forEach(function (map, index) {
+          map.on('move', fns[index]);
+        });
+      }
+
+      function off () {
+        maps.forEach(function (map, index) {
+          map.off('move', fns[index]);
+        });
+      }
+
+      // When one map moves, we turn off the movement listeners
+      // on all the maps, move it, then turn the listeners on again
+      function sync (master, clones) {
+        off();
+        moveToMapPosition(master, clones);
+        on();
+      }
+
+      on();
+      return function(){  off(); fns = []; maps = []; };
+    }
+
+    syncMaps([map, map2]);
+</script>
+
+</body>
+</html>
