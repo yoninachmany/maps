@@ -28,16 +28,24 @@ const map = new mapboxgl.Map({
   hash: true
 });
 map.on('load', () => {
-  const customlayer = new TextureLayer(
-    'test',
-    {
-      type: 'raster',
-      url: 'mapbox://mapbox.satellite',
-    },
-    setupLayer,
-    render
-  );
-  map.addLayer(customlayer);
+    map.setFog({
+        "range": [-1, 10],
+        "color": "hsl(0, 100%, 50%)",
+        "high-color": "hsl(0, 100%, 50%)",
+        "space-color": "hsl(0, 100%, 50%)",
+        "horizon-blend": 0.1,
+        "star-intensity": 0
+    })
+    const customlayer = new TextureLayer(
+        'test',
+        {
+            type: 'raster',
+            url: 'mapbox://mapbox.satellite',
+        },
+        setupLayer,
+        render
+    );
+    map.addLayer(customlayer);
 });
 
 let program;
