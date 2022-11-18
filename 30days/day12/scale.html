@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Scale Comparison</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 49.95% }
+#map2 { position: absolute; top: 0; bottom: 0; width: 49.95%; left: 50.05% }
+</style>
+</head>
+<body>
+<!-- Load the `mapbox-gl-geocoder` plugin. -->
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+<div id="map"></div>
+<div id="map2"></div>
+
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/satellite-streets-v11',
+        zoom: 14.33,
+        center: [-84.25744, 33.89287],
+        projection: 'globe'
+    });
+
+    map.on('load', () => {
+        map.setFog({
+            "range": [1, 10],
+            "color": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                "hsl(240, 12%, 70%)",
+                6,
+                "hsl(0, 0%, 100%)"
+            ],
+            "high-color": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                "hsl(240, 12%, 7%)",
+                6,
+                "hsl(38, 63%, 84%)"
+            ],
+            "space-color": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                "hsl(240, 12%, 9%)",
+                6,
+                "hsl(199, 61%, 80%)"
+            ],
+            "horizon-blend": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                0.008,
+                6,
+                0.15
+            ],
+            "star-intensity": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                0.1,
+                6,
+                0
+            ]
+        });
+
+        map.addControl(
+            new MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
+                mapboxgl: mapboxgl,
+                collapsed: true,
+                types: 'country,region,district,place,locality,neighborhood',
+                marker: false
+            })
+        );
+        map.addControl(new mapboxgl.ScaleControl());
+    });
+
+    const map2 = new mapboxgl.Map({
+        container: 'map2',
+        style: 'mapbox://styles/mapbox/satellite-streets-v11',
+        zoom: 14.15,
+        center: [11.25534, 43.7728],
+        projection: 'globe'
+    });
+
+    map2.on('load', () => {
+        map2.setFog({
+            "range": [1, 10],
+            "color": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                "hsl(240, 12%, 70%)",
+                6,
+                "hsl(0, 0%, 100%)"
+            ],
+            "high-color": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                "hsl(240, 12%, 7%)",
+                6,
+                "hsl(38, 63%, 84%)"
+            ],
+            "space-color": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                "hsl(240, 12%, 9%)",
+                6,
+                "hsl(199, 61%, 80%)"
+            ],
+            "horizon-blend": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                0.008,
+                6,
+                0.15
+            ],
+            "star-intensity": [
+                "interpolate",
+                ["exponential", 1.2],
+                ["zoom"],
+                5.5,
+                0.1,
+                6,
+                0
+            ]
+        });
+
+        map2.addControl(
+            new MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
+                mapboxgl: mapboxgl,
+                collapsed: true,
+                types: 'country,region,district,place,locality,neighborhood',
+                marker: false
+            })
+        );
+        map2.addControl(new mapboxgl.ScaleControl());
+    });
+</script>
+
+</body>
+</html>
