@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Honeycomb</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<script src="https://unpkg.com/h3-js@latest/dist/h3-js.umd.js"></script>
+<script src='https://bundle.run/geojson2h3@1.0.1'></script>
+
+<div id="map"></div>
+
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/empty-v9',
+        zoom: 2,
+        center: [0, 0],
+        projection: 'globe',
+        maxZoom: 6,
+        hash: true
+    });
+    map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
+
+    map.on('load', () => {
+        map.addSource('tiles-geojson', {
+            type: 'geojson',
+            data: {
+                type: 'FeatureCollection',
+                features: []
+            }
+        });
+
+        map.addSource('tiles-centers-geojson', {
+            type: 'geojson',
+            data: {
+                type: 'FeatureCollection',
+                features: []
+            }
+        });
+
+        map.addLayer({
+            id: 'tiles-shade',
+            source: 'tiles-geojson',
+            type: 'fill',
+            paint: {
+                'fill-color': ['case', ['get', 'isCenterChild'], '#f7da21', '#e6e6e6']
+            }
+        });
+
+        map.addLayer({
+            id: 'tiles',
+            source: 'tiles-geojson',
+            type: 'line',
+            paint: {
+                'line-color': 'white',
+                'line-width': 5
+            }
+        });
+
+        map.addLayer({
+            id: 'tiles-centers',
+            source: 'tiles-centers-geojson',
+            type: 'symbol',
+            layout: {
+                'text-field': ['get', 'letter'],
+                'text-font': ['Overpass Black']
+            }
+        });
+
+        updateTiles();
+    });
+
+    map.on('moveend', updateTiles);
+
+    const extents = [[-180,90],[180,90],[180,-90],[-180,-90],[-180,90]];
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    function updateTiles() {
+        const zoom = map.getZoom();
+        const res = zoomToRes(zoom);
+        const hexagons = h3.polygonToCells(extents, res);
+        const fcHexagons = geojson2h3.h3SetToFeatureCollection(hexagons, getProperties);
+        
+        const centers = hexagons.map((hexagon, i) => {
+            const center = h3.cellToLatLng(hexagon);
+            const letter = alphabet[Math.floor(Math.random() * alphabet.length)];
+
+            const f = {
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [center[1], center[0]]
+                },
+                properties: {
+                    letter: letter
+                }
+            };
+
+            return f;
+        });
+        const fcCenters = {
+            type: 'FeatureCollection',
+            features: centers
+        }
+
+        map.getSource('tiles-geojson').setData(fcHexagons);
+        map.getSource('tiles-centers-geojson').setData(fcCenters);
+    }
+
+    function getProperties(h3Index) {
+        const res = h3.getResolution(h3Index);
+        const parentRes = Math.max(0, res-1);
+        const parent = h3.cellToParent(h3Index, parentRes);
+        const centerChild = h3.cellToCenterChild(parent, res);
+        return {isCenterChild: h3Index==centerChild};
+    }
+
+    // Modified from https://github.com/matthiasfeist/what-the-h3index/blob/main/src/index.js
+    function zoomToRes(zoom) {
+        return Math.max(0, Math.floor((zoom - 3) * 0.8)+2);
+    }
+</script>
+
+</body>
+</html>
