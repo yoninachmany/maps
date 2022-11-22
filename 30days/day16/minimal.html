@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Redraw Borders</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+.dg.a { float: left !important; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+<script>
+    var GUIParams = function() {
+        this.simplification = 0.35;
+    }
+
+    var guiParams = new GUIParams();
+
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = window.map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/empty-v9',
+        projection: 'mercator',
+        zoom: 0,
+        center: [0, 0],
+        hash: true
+    });
+
+    window.onload = function() {
+        var gui = new dat.GUI(); // eslint-disable-line
+
+        var simplification = gui.add(guiParams, 'simplification', 0.35, 10);
+        simplification.onChange((value) => {
+            map.removeLayer('countries');
+            map.removeSource('countries');
+            map.addSource('countries', {
+                'attribution': '<a href="https://www.naturalearthdata.com/" target="_blank>Natural Earth</a>',
+                'type': 'geojson',
+                'data': './ne_10m_admin_0_countries.geojson',
+                'tolerance': value
+            });
+
+            map.addLayer({
+                'id': 'countries',
+                'type': 'line',
+                'source': 'countries',
+                'paint': {}
+            });
+        });
+    }
+
+    map.on('load', () => {
+        map.addSource('countries', {
+            'attribution': '<a href="https://www.naturalearthdata.com/" target="_blank>Natural Earth</a>',
+            'type': 'geojson',
+            'data': './ne_10m_admin_0_countries.geojson',
+            'tolerance': guiParams.simplification
+        });
+
+        map.addLayer({
+            'id': 'countries',
+            'type': 'line',
+            'source': 'countries',
+            'paint': {}
+        });
+    });
+</script>
+
+</body>
+</html>
