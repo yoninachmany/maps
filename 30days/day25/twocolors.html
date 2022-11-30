@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Black and Orange</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+<div id="map"></div>
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/yoninachmany/clawrb3fq000314nlzyyauund',
+        zoom: 14.5,
+        center: [-73.97081, 40.77398],
+        pitch: 57,
+        bearing: 28.9,
+        hash: true
+    });
+
+    map.on('load', () => {
+        var park;
+        fetch('./park.geojson')
+          .then(res => res.json())
+          .then(json => park = json)
+          .then(() => {
+            const coordinates = park.features[0].geometry.coordinates;
+            const polygon = turf.polygon(coordinates);
+            const mask = turf.mask(polygon);
+
+            map.addSource('park', {
+                type: 'geojson',
+                data: mask
+            });
+                 
+            map.addLayer({
+                'id': 'park',
+                'type': 'fill',
+                'source': 'park',
+                'paint': {
+                    'fill-color': 'black',
+                }
+            });
+          }
+        );
+    });
+</script>
+
+</body>
+</html>
