@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Terrain Wireframe</title>
+<title>Pointillist Globe</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
@@ -13,28 +13,50 @@ body { margin: 0; padding: 0; }
 </head>
 <body>
 <div id="map"></div>
-
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
 <script>
 	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
     const map = new mapboxgl.Map({
         container: 'map',
-        style: 'mapbox://styles/mapbox/outdoors-v12',
-        zoom: 1.5,
-        center: [30, 50],
+        style: 'mapbox://styles/mapbox/empty-v9',
+        projection: 'globe',
+        center: [19.11, 3.69],
+        zoom: 2.39,
+        maxZoom: 5.5,
         hash: true
     });
-
-    map.on('load', () => {
-        map.addSource('mapbox-dem', {
-            'type': 'raster-dem',
-            'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-            'tileSize': 512,
-            'maxzoom': 14
+    map.on('style.load', () => {
+        map.setFog({
+            "range": [1, 10],
+            "color": "hsl(240, 12%, 70%)",
+            "high-color": "hsl(240, 12%, 7%)",
+            "space-color": "hsl(240, 12%, 9%)",
+            "horizon-blend": 0.008,
+            "star-intensity": 0.1,
         });
-        map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 2 });
-        map.showTerrainWireframe = true;
 
-        map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
+        map.addSource('points', {
+            type: 'geojson',
+            data: './colors.geojson',
+            attribution: '<a href="https://neo.gsfc.nasa.gov/view.php?datasetId=BlueMarbleNG-TB" target="_blank">Blue Marble</a>'
+        });
+
+        map.addLayer({
+            'id': 'points',
+            'type': 'circle',
+            'source': 'points',
+            'paint': {
+                'circle-radius': {
+                    'base': 5,
+                    'stops': [
+                        [0, 5],
+                        [3, 20],
+                        [5, 40]
+                    ]
+                },
+                'circle-color': ["rgb", ["get", "1"], ["get", "2"], ["get", "3"]]
+            }
+        });
     });
 </script>
 
