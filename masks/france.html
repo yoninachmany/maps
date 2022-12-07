@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>France Aerial Photography Prohibited Areas</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoieW9uaW5hY2htYW55IiwiYSI6ImNqYWFocjVlajBocDcyd3RleW9sZWpkN3YifQ.9dk1UZWtf_NliyYFd0DALQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/satellite-streets-v12',
+        zoom: 11.82,
+        center: [2.34697, 48.85883],
+        hash: true
+    });
+
+    map.on('load', () => {
+        const layers = map.getStyle().layers;
+        let firstSymbolId;
+        for (const layer of layers) {
+            if (layer.type === 'symbol') {
+                firstSymbolId = layer.id;
+                break;
+            }
+        }
+
+        map.addSource('france-ortho', {
+            'type': 'raster',
+            'tiles': [
+                'https://wxs.ign.fr/essentiels/geoportail/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&TILEMATRIXSET=PM&TILEMATRIX={z}&TILECOL={x}&TILEROW={y}&STYLE=normal&FORMAT=image/jpeg'
+            ],
+            'tileSize': 256,
+            'attribution': '<a href="https://geoservices.ign.fr/services-web-essentiels" target="_blank">IGN</a>'
+        });
+        map.addLayer(
+            {
+                'id': 'france-ortho',
+                'type': 'raster',
+                'source': 'france-ortho',
+                'paint': {}
+            },
+            firstSymbolId
+        );
+
+        map.addSource('prohibited', {
+            'type': 'geojson',
+            'data': './Arrete_ZIPVA_06-2021.geojson'
+        });
+        map.addLayer({
+            'id': 'prohibited',
+            'type': 'line',
+            'source': 'prohibited',
+            'layout': {},
+            'paint': {
+                'line-color': 'yellow',
+                'line-width': 3
+            }
+        }, firstSymbolId);
+    });
+
+    map.addControl(
+        new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken,
+            mapboxgl: mapboxgl,
+            collapsed: true,
+            marker: false
+        })
+    );
+</script>
+
+</body>
+</html>
